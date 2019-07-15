@@ -23,8 +23,12 @@ class display_handler():
     async def arrowPages(self,args,page):
         while True:
             message = ""
-            embed = discord.Embed(title="Search results for:",description=args)
-            self.results,pages = search.multi(args,page)
+            if str(self.context.command) == "search":
+                embed = discord.Embed(title="Search results for:",description=args)
+                self.results,extra = search.multi(args,page)
+            elif str(self.context.command) == "watched":
+                embed = discord.Embed(title="Watched list of:",description=self.context.author.mention)
+            self.results,extra = lists.get(args,page)
             for res in self.results:
                 if res.media_type == "movie":
                     message += f'{self.results.index(res)+1} - Movie: {res.title}\n'
@@ -32,7 +36,7 @@ class display_handler():
                     message += f'{self.results.index(res)+1} - TV: {res.name}\n'
                 elif res.media_type == "person":
                     message += f'{self.results.index(res)+1} - Person: {res.name}\n'
-            embed.add_field(name=f'Page: {pages.page}/{pages.total_pages}   Total results: {pages.total_results}',value=message)
+            embed.add_field(name=f'Page: {extra.page}/{extra.total_pages}   Total results: {extra.total_results}',value=message)
             try:
                 await self.msg.edit(embed=embed)
             except:
@@ -161,10 +165,11 @@ class generalCommands(commands.Cog):
 
     @commands.command()
     async def watched(self,ctx,*args):
-        
+        c.execute("SELECT listID FROM accounts WHERE discordID = ?;",(ctx.author.id,))
+        listID = c.fetchall()[0][0]
         page = 1
         globals()[ctx.message.author] = display_handler(self.client,ctx)
-        await globals()[ctx.message.author].arrowPages(arg,page)
+        await globals()[ctx.message.author].arrowPages(listID,page)
 
 
     # @commands.command(name="filter",description="filter a list of movies by genre....etc")
