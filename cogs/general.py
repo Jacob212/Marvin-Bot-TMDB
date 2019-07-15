@@ -23,19 +23,32 @@ class display_handler():
     async def arrowPages(self,args,page):
         while True:
             message = ""
+            media_type = "multi"
             if str(self.context.command) == "search":
-                embed = discord.Embed(title="Search results for:",description=args)
-                self.results,extra = search.multi(args,page)
+                if "movies" in args:
+                    embed = discord.Embed(title="Search results for:",description=args["query"])
+                    self.results,extra = search.movie(args["query"],page)
+                    for res in self.results:
+                        message += f'{self.results.index(res)+1} - Movie: {res.title}\n'
+                elif "shows" in args:
+                    embed = discord.Embed(title="Search results for:",description=args["query"])
+                    self.results,extra = search.tv(args["query"],page)
+                    for res in self.results:
+                        message += f'{self.results.index(res)+1} - TV: {res.name}\n'
+                else:
+                    embed = discord.Embed(title="Search results for:",description=args["query"])
+                    self.results,extra = search.multi(args["query"],page)
             elif str(self.context.command) == "watched":
                 embed = discord.Embed(title="Watched list of:",description=self.context.author.mention)
-            self.results,extra = lists.get(args,page)
-            for res in self.results:
-                if res.media_type == "movie":
-                    message += f'{self.results.index(res)+1} - Movie: {res.title}\n'
-                elif res.media_type == "tv":
-                    message += f'{self.results.index(res)+1} - TV: {res.name}\n'
-                elif res.media_type == "person":
-                    message += f'{self.results.index(res)+1} - Person: {res.name}\n'
+                self.results,extra = lists.get(args["listID"],page)
+            if "movies" not in args and "shows" not in args:
+                for res in self.results:
+                    if res.media_type == "movie":
+                        message += f'{self.results.index(res)+1} - Movie: {res.title}\n'
+                    elif res.media_type == "tv":
+                        message += f'{self.results.index(res)+1} - TV: {res.name}\n'
+                    elif res.media_type == "person":
+                        message += f'{self.results.index(res)+1} - Person: {res.name}\n'
             embed.add_field(name=f'Page: {extra.page}/{extra.total_pages}   Total results: {extra.total_results}',value=message)
             try:
                 await self.msg.edit(embed=embed)
@@ -107,10 +120,19 @@ class generalCommands(commands.Cog):
 
     @commands.command(description="",brief="",aliases=["Search"])
     async def search(self,ctx,*args):
-        arg = " ".join(args)
+        options = {}
+        query = []
+        for part in args:
+            if part == "--shows":
+                options["shows"] = True
+            elif part == "--movies":
+                options["movies"] = True
+            else:
+                query.append(part)
+        options["query"] = " ".join(query)
         page = 1
         globals()[ctx.message.author] = display_handler(self.client,ctx)
-        await globals()[ctx.message.author].arrowPages(arg,page)
+        await globals()[ctx.message.author].arrowPages(options,page)
 
     @commands.command(description="",brief="",aliases=["Select"])
     async def select(self,ctx, arg=None):
@@ -166,10 +188,10 @@ class generalCommands(commands.Cog):
     @commands.command()
     async def watched(self,ctx,*args):
         c.execute("SELECT listID FROM accounts WHERE discordID = ?;",(ctx.author.id,))
-        listID = c.fetchall()[0][0]
+        options["listID"] = c.fetchall()[0][0]
         page = 1
         globals()[ctx.message.author] = display_handler(self.client,ctx)
-        await globals()[ctx.message.author].arrowPages(listID,page)
+        await globals()[ctx.message.author].arrowPages(options,page)
 
 
     # @commands.command(name="filter",description="filter a list of movies by genre....etc")
