@@ -82,6 +82,12 @@ class search(_base):
     def multi(self,query,page=1):
         return self._get_obj(self._call('GET',f'{self._url}3/search/multi?api_key={self._api_key}&language=en-US&include_adult=true&query="{query}"&page={str(page)}'))
 
+    def movie(self,query,page=1):
+        return self._get_obj(self._call('GET',f'{self._url}3/search/movie?api_key={self._api_key}&language=en-US&include_adult=true&query="{query}"&page={str(page)}'))
+
+    def tv(self,query,page=1):
+        return self._get_obj(self._call('GET',f'{self._url}3/search/tv?api_key={self._api_key}&language=en-US&include_adult=true&query="{query}"&page={str(page)}'))
+
 class details(_base):
     def movie(self,movie_id):
         return _AsObj(**self._call('GET',f'{self._url}3/movie/{movie_id}?api_key={self._api_key}&language=en-US'))
