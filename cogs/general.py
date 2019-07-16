@@ -4,10 +4,11 @@ from discord.ext import commands
 import requests
 import time
 import sqlite3
+import re
 
 conn = sqlite3.connect("discord.db")
 c = conn.cursor()
-c.execute("CREATE TABLE IF NOT EXISTS accounts (discordID INTEGER NOT NULL PRIMARY KEY UNIQUE,accessToken  TEXT UNIQUE,accountID TEXT UNIQUE,listID INTEGER UNIQUE);")
+c.execute("CREATE TABLE IF NOT EXISTS accounts (userName TEXT NOT NULL,discordID INTEGER NOT NULL PRIMARY KEY UNIQUE,accessToken  TEXT UNIQUE,accountID TEXT UNIQUE,listID INTEGER UNIQUE);")
 conn.commit()
 
 search = api_handler.search()
@@ -39,7 +40,7 @@ class display_handler():
                     embed = discord.Embed(title="Search results for:",description=args["query"])
                     self.results,extra = search.multi(args["query"],page)
             elif str(self.context.command) == "watched":
-                embed = discord.Embed(title="Watched list of:",description=self.context.author.mention)
+                embed = discord.Embed(title="Watched list of:",description=args["mention"])
                 self.results,extra = lists.get(args["listID"],page)
             if "movies" not in args and "shows" not in args:
                 for res in self.results:
@@ -180,14 +181,21 @@ class generalCommands(commands.Cog):
             response2 = auth.access(response.request_token)
             print(response2)
             response3 = lists.create(response2.access_token)
-            c.execute("INSERT INTO accounts VALUES(?,?,?,?)", (ctx.author.id,response2.access_token,response2.account_id,response3.id))
+            c.execute("INSERT INTO accounts VALUES(?,?,?,?,?)", (ctx.author.name,ctx.author.id,response2.access_token,response2.account_id,response3.id))
             conn.commit()
         else:
             await ctx.send("You are already setup",delete_after=10)
 
     @commands.command()
-    async def watched(self,ctx,*args):
-        c.execute("SELECT listID FROM accounts WHERE discordID = ?;",(ctx.author.id,))
+    async def watched(self,ctx,*arg):
+        options = {}
+        options["mention"] = ctx.author.mention
+        searchUser = ctx.author.id
+        for x in arg:
+            if re.match("(<@!?)[0-9]*(>)",x):
+                searchUser = int(re.findall("\d+",x)[0])
+                options["mention"] = x
+        c.execute("SELECT listID FROM accounts WHERE discordID = ?;",(searchUser,))
         options["listID"] = c.fetchall()[0][0]
         page = 1
         globals()[ctx.message.author] = display_handler(self.client,ctx)
