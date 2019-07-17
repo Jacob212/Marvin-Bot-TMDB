@@ -2,7 +2,8 @@ import requests
 import requests_cache
 import time
 
-requests_cache.install_cache('demo_cache')
+requests_cache.install_cache(cache_name='TMDB-cache', backend='sqlite', expire_after=600)
+requests_cache.remove_expired_responses()
 
 f = open("api.txt","r")#Reads api and read access token needed to use the api
 KEY = f.readline().strip("\n")
@@ -37,7 +38,7 @@ class _base():
     def _call(self, request_type, url, headers=None, payload=None):
         req = requests.request(request_type,url,data=payload,headers=headers)
         headers = req.headers
-
+        print(f'Used cache: {req.from_cache}')
         if 'X-RateLimit-Remaining' in headers:
             self._remaining = int(headers['X-RateLimit-Remaining'])
 
