@@ -50,7 +50,7 @@ class display_handler():
             embed.add_field(name=f'Page: {extra.page}/{extra.total_pages}   Total results: {extra.total_results}',value=message)
             try:
                 await self.msg.edit(embed=embed)
-            except:
+            except NameError:
                 self.msg = await self.context.send(embed=embed)
             await self.msg.add_reaction("◀")
             await self.msg.add_reaction("▶")

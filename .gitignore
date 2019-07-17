@@ -6,4 +6,6 @@ api.txt
 *.pyc
 Marvin-Bot-TMDB.sublime-workspace
 Marvin-Bot-TMDB.sublime-project
-
+.coverage
+coverage.xml
+htmlcov/

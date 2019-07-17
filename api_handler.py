@@ -15,29 +15,6 @@ class _base():
         self._api_key = KEY
         self._read_access_token = TOKEN
 
-    # def _call(self, type, action, append_to_response):
-    #   url = "%s%s?api_key=%s&%s&language=%s" % (self._url, action, self.api_key, append_to_response, self.language)
-
-    #   req = requests.get(url)
-    #   headers = req.headers
-
-    #   if 'X-RateLimit-Remaining' in headers:
-    #       self._remaining = int(headers['X-RateLimit-Remaining'])
-
-    #   if 'X-RateLimit-Reset' in headers:
-    #       self._reset = int(headers['X-RateLimit-Reset'])
-
-    #   if self._remaining < 1:
-    #       current_time = int(time.time())
-    #       sleep_time = self._reset - current_time
-    #       print("Rate limit reached. Sleeping for: %d" % sleep_time)
-    #       time.sleep(abs(sleep_time))
-    #       self._call(action, append_to_response)
-                
-    #   json = req.json()
-
-    #   return json
-
     @staticmethod
     def _get_obj(result, key="results"):
         if 'success' in result and result['success'] is False:
