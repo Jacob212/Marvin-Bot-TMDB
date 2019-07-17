@@ -14,22 +14,35 @@ auth = api_handler.auth()
 lists = api_handler.lists()
 details = api_handler.details()
 
-def embed_format(embed,detail):
-    allowed = ["original_title","release_date","runtime","spoken_languages","languages","genres","number_of_seasons","number_of_episodes","backdrop_path"]
-    for attr, value in detail.__dict__.items():
-        #print(attr, value)
-        if attr in allowed:
-            if attr == "genres":
-                embed.add_field(name=attr,value=", ".join([genre['name'] for genre in value]))
-            elif attr == "languages":
-                embed.add_field(name="Languages",value=", ".join([language.upper() for language in value]))
-            elif attr == "spoken_languages":
-                embed.add_field(name="Languages",value=", ".join([language['name'] for language in value]))
-            elif attr == "backdrop_path":
-                embed.set_image(url=f'https://image.tmdb.org/t/p/original{value}')
-            else:
-                embed.add_field(name=attr.capitalize(),value=value)
+cfg = (
+    ("original_name", "Original Title", None),
+    ("original_title", "Original Title", None),
+    ("release_date", None, None),
+    ("genres", None, lambda v: ", ".join(genre['name'] for genre in v)),
+    ("runtime", "Run Time", '{0} minutes'.format),
+    ("languages", "Languages", lambda v: ", ".join(language.upper() for language in v)),
+    ("spoken_languages", "Languages", lambda v: ", ".join(language['name'] for language in v)),
+    ("number_of_seasons", "Seasons", None),
+    ("number_of_episodes", "Episodes", None)
+)
 
+def embed_format(embed, detail):
+    for attr, name, fmt in cfg:
+        try:
+            value = getattr(detail, attr)
+        except AttributeError:
+            continue
+        if name is None:
+            name = attr.replace('_', ' ').title()
+        if fmt is not None:
+            value = fmt(value)
+        embed.add_field(name=name, value=value)
+    try:
+        value = getattr(detail, "backdrop_path")
+    except AttributeError:
+        pass
+    else:
+        embed.set_image(url=f'https://image.tmdb.org/t/p/original{value}')
 
 class display_handler():
     def __init__(self,client,context,args):
@@ -84,20 +97,10 @@ class display_handler():
             if self.results[index].media_type == "movie" or "movies" in self.args:
                 detail = details.movie(self.results[index].id)
                 embed = discord.Embed(title=detail.title,description=f'{detail.overview}',url=f'https://www.imdb.com/title/{detail.imdb_id}',color=self.context.message.author.color.value)
-                embed.add_field(name=f'Original Title {detail.original_language.upper()}',value=detail.original_title)
-                embed.add_field(name="Release Date",value=detail.release_date)
-                embed.add_field(name="Run Time",value=f'{detail.runtime} minutes')
-                embed.add_field(name="Languages",value=", ".join([language['name'] for language in detail.spoken_languages]))
             elif self.results[index].media_type == "tv" or "tv" in self.args:
                 detail = details.tv(self.results[index].id)
                 embed = discord.Embed(title=detail.name,description=f'{detail.overview}',color=self.context.message.author.color.value)
-            #embed_format(embed,detail)
-                embed.add_field(name=f'Original Title {detail.original_language.upper()}',value=detail.original_name)
-                embed.add_field(name="Seasons",value=detail.number_of_seasons)
-                embed.add_field(name="Episodes",value=detail.number_of_episodes)
-                embed.add_field(name="Languages",value=", ".join([language.upper() for language in detail.languages]))
-            embed.add_field(name="Genres",value=", ".join([genre['name'] for genre in detail.genres]))
-            embed.set_image(url=f'https://image.tmdb.org/t/p/original{detail.backdrop_path}')
+            embed_format(embed,detail)
         else:
             embed = discord.Embed(title="That is not an option",description="Please go back",color=discord.Colour.dark_red())
         await self.msg.edit(embed=embed)
