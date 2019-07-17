@@ -1,5 +1,8 @@
 import requests
+import requests_cache
 import time
+
+requests_cache.install_cache('demo_cache')
 
 f = open("api.txt","r")#Reads api and read access token needed to use the api
 KEY = f.readline().strip("\n")
@@ -23,7 +26,7 @@ class _base():
         if key is not None:
             #[arr.append(_AsObj(**res)) for res in result[key]]
             arr = [_AsObj(**res) for res in result[key]]
-            
+
         else:
             return _AsObj(**result)
         if key == "results":

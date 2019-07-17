@@ -9,3 +9,4 @@ Marvin-Bot-TMDB.sublime-project
 .coverage
 coverage.xml
 htmlcov/
+*.sqlite
