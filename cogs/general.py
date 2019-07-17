@@ -14,21 +14,39 @@ auth = api_handler.auth()
 lists = api_handler.lists()
 details = api_handler.details()
 
+def embed_format(embed,detail):
+    allowed = ["original_title","release_date","runtime","spoken_languages","languages","genres","number_of_seasons","number_of_episodes","backdrop_path"]
+    for attr, value in detail.__dict__.items():
+        #print(attr, value)
+        if attr in allowed:
+            if attr == "genres":
+                embed.add_field(name=attr,value=", ".join([genre['name'] for genre in value]))
+            elif attr == "languages":
+                embed.add_field(name="Languages",value=", ".join([language.upper() for language in value]))
+            elif attr == "spoken_languages":
+                embed.add_field(name="Languages",value=", ".join([language['name'] for language in value]))
+            elif attr == "backdrop_path":
+                embed.set_image(url=f'https://image.tmdb.org/t/p/original{value}')
+            else:
+                embed.add_field(name=attr.capitalize(),value=value)
+
+
 class display_handler():
-    def __init__(self,client,context):
+    def __init__(self,client,context,args):
         self.client = client
         self.context = context
+        self.args = args
 
-    async def arrowPages(self,args,page):
+    async def arrowPages(self,page):
         while True:
             message = ""
-            if "movies" not in args and "shows" not in args:
+            if "movies" not in self.args and "shows" not in self.args:
                 if str(self.context.command) == "search":
-                    embed = discord.Embed(title="Search results for:",description=args["query"])
-                    self.results,extra = search.multi(args["query"],page)
+                    embed = discord.Embed(title="Search results for:",description=self.args["query"])
+                    self.results,extra = search.multi(self.args["query"],page)
                 elif str(self.context.command) == "watched":
-                    embed = discord.Embed(title="Watched list of:",description=args["mention"])
-                    self.results,extra = lists.get(args["listID"],page)
+                    embed = discord.Embed(title="Watched list of:",description=self.args["mention"])
+                    self.results,extra = lists.get(self.args["listID"],page)
                 for res in self.results:
                     if res.media_type == "movie":
                         message += f'{self.results.index(res)+1} - Movie: {res.title}\n'
@@ -36,14 +54,14 @@ class display_handler():
                         message += f'{self.results.index(res)+1} - TV: {res.name}\n'
                     elif res.media_type == "person":
                         message += f'{self.results.index(res)+1} - Person: {res.name}\n'
-            elif "movies" in args and str(self.context.command) == "search":
-                embed = discord.Embed(title="Search results for:",description=args["query"])
-                self.results,extra = search.movie(args["query"],page)
+            elif "movies" in self.args and str(self.context.command) == "search":
+                embed = discord.Embed(title="Search results for:",description=self.args["query"])
+                self.results,extra = search.movie(self.args["query"],page)
                 for res in self.results:
                     message += f'{self.results.index(res)+1} - Movie: {res.title}\n'
-            elif "shows" in args and str(self.context.command) == "search":
-                embed = discord.Embed(title="Search results for:",description=args["query"])
-                self.results,extra = search.tv(args["query"],page)
+            elif "shows" in self.args and str(self.context.command) == "search":
+                embed = discord.Embed(title="Search results for:",description=self.args["query"])
+                self.results,extra = search.tv(self.args["query"],page)
                 for res in self.results:
                     message += f'{self.results.index(res)+1} - TV: {res.name}\n'
             embed.add_field(name=f'Page: {extra.page}/{extra.total_pages}   Total results: {extra.total_results}',value=message)
@@ -63,18 +81,21 @@ class display_handler():
 
     async def details(self,index):
         if index <= len(self.results):
-            if self.results[index].media_type == "movie":
+            if self.results[index].media_type == "movie" or "movies" in self.args:
                 detail = details.movie(self.results[index].id)
                 embed = discord.Embed(title=detail.title,description=f'{detail.overview}',url=f'https://www.imdb.com/title/{detail.imdb_id}',color=self.context.message.author.color.value)
-                embed.add_field(name="Original Title",value=detail.original_title)
+                embed.add_field(name=f'Original Title {detail.original_language.upper()}',value=detail.original_title)
                 embed.add_field(name="Release Date",value=detail.release_date)
-                embed.add_field(name="Run Time",value=detail.runtime)
-            elif self.results[index].media_type == "tv":
+                embed.add_field(name="Run Time",value=f'{detail.runtime} minutes')
+                embed.add_field(name="Languages",value=", ".join([language['name'] for language in detail.spoken_languages]))
+            elif self.results[index].media_type == "tv" or "tv" in self.args:
                 detail = details.tv(self.results[index].id)
                 embed = discord.Embed(title=detail.name,description=f'{detail.overview}',color=self.context.message.author.color.value)
-                embed.add_field(name="Original Title",value=detail.original_name)
+            #embed_format(embed,detail)
+                embed.add_field(name=f'Original Title {detail.original_language.upper()}',value=detail.original_name)
                 embed.add_field(name="Seasons",value=detail.number_of_seasons)
                 embed.add_field(name="Episodes",value=detail.number_of_episodes)
+                embed.add_field(name="Languages",value=", ".join([language.upper() for language in detail.languages]))
             embed.add_field(name="Genres",value=", ".join([genre['name'] for genre in detail.genres]))
             embed.set_image(url=f'https://image.tmdb.org/t/p/original{detail.backdrop_path}')
         else:
@@ -116,7 +137,7 @@ class generalCommands(commands.Cog):
         self.client = client
 
     @commands.command(description="",brief="",aliases=["Search"])
-    async def search(self,ctx,*args):
+    async def search(self,context,*args):
         options = {}
         query = []
         for part in args:
@@ -128,31 +149,46 @@ class generalCommands(commands.Cog):
                 query.append(part)
         options["query"] = " ".join(query)
         page = 1
-        globals()[ctx.message.author] = display_handler(self.client,ctx)
-        await globals()[ctx.message.author].arrowPages(options,page)
+        globals()[context.message.author] = display_handler(self.client,context,options)
+        await globals()[context.message.author].arrowPages(page)
+
+    @commands.command(description="",brief="",aliases=["Watched"])
+    async def watched(self,context,*arg):
+        options = {}
+        options["mention"] = context.author.mention
+        searchUser = context.author.id
+        for x in arg:
+            if re.match("(<@!?)[0-9]*(>)",x):
+                searchUser = int(re.findall("\d+",x)[0])
+                options["mention"] = x
+        c.execute("SELECT listID FROM accounts WHERE discordID = ?;",(searchUser,))
+        options["listID"] = c.fetchall()[0][0]
+        page = 1
+        globals()[context.message.author] = display_handler(self.client,context,options)
+        await globals()[context.message.author].arrowPages(page)
 
     @commands.command(description="",brief="",aliases=["Select"])
-    async def select(self,ctx, arg=None):
-        await ctx.message.delete()
+    async def select(self,context, arg=None):
+        await context.message.delete()
         if arg is None:
-            await ctx.send("You have to enter an option to use this command")
-        elif arg.isdigit() and ctx.message.author in globals():
-            await globals()[ctx.message.author].details(int(arg)-1)
+            await context.send("You have to enter an option to use this command")
+        elif arg.isdigit() and context.message.author in globals():
+            await globals()[context.message.author].details(int(arg)-1)
         else:
             await context.send("That is not a valid option")
 
     @commands.command(description="",brief="",aliases=["Watch"])
-    async def watch(self,ctx,arg=None):
-        await ctx.message.delete()
+    async def watch(self,context,arg=None):
+        await context.message.delete()
         if arg is None:
-            await ctx.send("You have to enter an option to use this command")
-        elif arg.isdigit() and ctx.message.author in globals():
-            await globals()[ctx.message.author].add_watchlist(int(arg)-1)
+            await context.send("You have to enter an option to use this command")
+        elif arg.isdigit() and context.message.author in globals():
+            await globals()[context.message.author].add_watchlist(int(arg)-1)
         else:
             await context.send("That is not a valid option")
 
     @commands.command()
-    async def discover_movie(self,ctx,*args):
+    async def discover_movie(self,context,*args):
         arg = " ".join(args)
         search,pages = discover.discover_movie(arg)
         message = ""
@@ -163,44 +199,28 @@ class generalCommands(commands.Cog):
                 message += f'{res.name}  {res.id}  {res.media_type}\n'
         embed = discord.Embed(title="Search results:",description="bob")
         embed.add_field(name=f'Page: {pages.page}/{pages.total_pages}   Total results:{pages.total_results}',value=message)
-        await ctx.send(embed=embed)
+        await context.send(embed=embed)
 
     @commands.command(description="",brief="",aliases=["Setup"])
-    async def setup(self,ctx):
-        await ctx.message.delete()
-        c.execute("SELECT discordID, accessToken, accountID FROM accounts WHERE discordID = ?;",(ctx.author.id,))
+    async def setup(self,context):
+        await context.message.delete()
+        c.execute("SELECT discordID, accessToken, accountID FROM accounts WHERE discordID = ?;",(context.author.id,))
         if c.fetchall() == []:
             response = auth.request()
-            embed = discord.Embed(title="Link",description="To use all the features of this bot you will need an account with the movie database and approve the bot to have access ",url=f'https://www.themoviedb.org/auth/access?request_token={response.request_token}',color=ctx.message.author.color.value)
-            await ctx.author.send(embed = embed)
+            embed = discord.Embed(title="Link",description="To use all the features of this bot you will need an account with the movie database and approve the bot to have access ",url=f'https://www.themoviedb.org/auth/access?request_token={response.request_token}',color=context.message.author.color.value)
+            await context.author.send(embed = embed)
             msg = await self.client.wait_for('message', check=lambda m: isinstance(m.channel, discord.DMChannel) and m.content == "approved")
             response2 = auth.access(response.request_token)
             print(response2)
             response3 = lists.create(response2.access_token)
-            c.execute("INSERT INTO accounts VALUES(?,?,?,?,?)", (ctx.author.name,ctx.author.id,response2.access_token,response2.account_id,response3.id))
+            c.execute("INSERT INTO accounts VALUES(?,?,?,?,?)", (context.author.name,context.author.id,response2.access_token,response2.account_id,response3.id))
             conn.commit()
         else:
-            await ctx.send("You are already setup",delete_after=10)
-
-    @commands.command()
-    async def watched(self,ctx,*arg):
-        options = {}
-        options["mention"] = ctx.author.mention
-        searchUser = ctx.author.id
-        for x in arg:
-            if re.match("(<@!?)[0-9]*(>)",x):
-                searchUser = int(re.findall("\d+",x)[0])
-                options["mention"] = x
-        c.execute("SELECT listID FROM accounts WHERE discordID = ?;",(searchUser,))
-        options["listID"] = c.fetchall()[0][0]
-        page = 1
-        globals()[ctx.message.author] = display_handler(self.client,ctx)
-        await globals()[ctx.message.author].arrowPages(options,page)
-
+            await context.send("You are already setup",delete_after=10)
 
     # @commands.command(name="filter",description="filter a list of movies by genre....etc")
-    # async def filter_movies(self,ctx,*args):
-    #     await ctx.message.delete()
+    # async def filter_movies(self,context,*args):
+    #     await context.message.delete()
     #     paramsList = ["year","genre","other"]
     #     params = {}
     #     key = "genre"
@@ -217,15 +237,15 @@ class generalCommands(commands.Cog):
     #             params[key] = arg
     #     for key,val in params.items():
     #         if key not in paramsList:
-    #             await ctx.send("One or more of your options are wrong")
+    #             await context.send("One or more of your options are wrong")
     #             break
     #     else:
-    #         globals()[ctx.message.author.id] = arrowPages(self.client,ctx,params=params,tv=tv)
-    #         await globals()[ctx.message.author.id].display()
+    #         globals()[context.message.author.id] = arrowPages(self.client,context,params=params,tv=tv)
+    #         await globals()[context.message.author.id].display()
 
     # @commands.command()
-    # async def fitler_movies(self,ctx,*args):
-    #     await ctx.message.delete()
+    # async def fitler_movies(self,context,*args):
+    #     await context.message.delete()
     #     paramsList = ["--year","--genre"]
     #     params = {}
     #     key = "--genre"
