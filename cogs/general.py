@@ -22,24 +22,13 @@ class display_handler():
     async def arrowPages(self,args,page):
         while True:
             message = ""
-            if str(self.context.command) == "search":
-                if "movies" in args:
-                    embed = discord.Embed(title="Search results for:",description=args["query"])
-                    self.results,extra = search.movie(args["query"],page)
-                    for res in self.results:
-                        message += f'{self.results.index(res)+1} - Movie: {res.title}\n'
-                elif "shows" in args:
-                    embed = discord.Embed(title="Search results for:",description=args["query"])
-                    self.results,extra = search.tv(args["query"],page)
-                    for res in self.results:
-                        message += f'{self.results.index(res)+1} - TV: {res.name}\n'
-                else:
+            if "movies" not in args and "shows" not in args:
+                if str(self.context.command) == "search":
                     embed = discord.Embed(title="Search results for:",description=args["query"])
                     self.results,extra = search.multi(args["query"],page)
-            elif str(self.context.command) == "watched":
-                embed = discord.Embed(title="Watched list of:",description=args["mention"])
-                self.results,extra = lists.get(args["listID"],page)
-            if "movies" not in args and "shows" not in args:
+                elif str(self.context.command) == "watched":
+                    embed = discord.Embed(title="Watched list of:",description=args["mention"])
+                    self.results,extra = lists.get(args["listID"],page)
                 for res in self.results:
                     if res.media_type == "movie":
                         message += f'{self.results.index(res)+1} - Movie: {res.title}\n'
@@ -47,10 +36,20 @@ class display_handler():
                         message += f'{self.results.index(res)+1} - TV: {res.name}\n'
                     elif res.media_type == "person":
                         message += f'{self.results.index(res)+1} - Person: {res.name}\n'
+            elif "movies" in args and str(self.context.command) == "search":
+                embed = discord.Embed(title="Search results for:",description=args["query"])
+                self.results,extra = search.movie(args["query"],page)
+                for res in self.results:
+                    message += f'{self.results.index(res)+1} - Movie: {res.title}\n'
+            elif "shows" in args and str(self.context.command) == "search":
+                embed = discord.Embed(title="Search results for:",description=args["query"])
+                self.results,extra = search.tv(args["query"],page)
+                for res in self.results:
+                    message += f'{self.results.index(res)+1} - TV: {res.name}\n'
             embed.add_field(name=f'Page: {extra.page}/{extra.total_pages}   Total results: {extra.total_results}',value=message)
             try:
                 await self.msg.edit(embed=embed)
-            except NameError:
+            except AttributeError:
                 self.msg = await self.context.send(embed=embed)
             await self.msg.add_reaction("◀")
             await self.msg.add_reaction("▶")
