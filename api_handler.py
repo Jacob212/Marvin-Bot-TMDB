@@ -70,7 +70,7 @@ class _base():
             print("Rate limit reached. Sleeping for: %d" % sleep_time)
             time.sleep(abs(sleep_time))
             self._call(request_type, url, headers, payload)
- 
+
         json = req.json()
 
         return json
