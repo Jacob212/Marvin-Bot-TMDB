@@ -1,8 +1,6 @@
 import discord
 import api_handler
 from discord.ext import commands
-import requests
-import time
 import sqlite3
 import re
 
@@ -24,7 +22,6 @@ class display_handler():
     async def arrowPages(self,args,page):
         while True:
             message = ""
-            media_type = "multi"
             if str(self.context.command) == "search":
                 if "movies" in args:
                     embed = discord.Embed(title="Search results for:",description=args["query"])

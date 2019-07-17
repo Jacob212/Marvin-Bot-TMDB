@@ -6,7 +6,7 @@ import subprocess
 class OwnerCog(commands.Cog):
   def __init__(self, client):
     self.client = client
-    
+
   async def cog_command_error(self,ctx,error):
     print(f'{ctx.command.qualified_name}: {error}')
 
@@ -70,7 +70,7 @@ class OwnerCog(commands.Cog):
       returned_value = subprocess.check_output("git pull",shell=True)
       embed = discord.Embed(title="Github Update",description=f'{returned_value.decode("utf-8")}',color=discord.Colour.green())
     except Exception as e:
-      embed = discord.Embed(title="Github Update Failed",description=f'Update failed with following error: {type(e).__name__} - {e}',color=discord.Colour.red())    
+      embed = discord.Embed(title="Github Update Failed",description=f'Update failed with following error: {type(e).__name__} - {e}',color=discord.Colour.red())
     await discord.Object(id=538719054479884300).send(embed=embed)
 
 def setup(client):

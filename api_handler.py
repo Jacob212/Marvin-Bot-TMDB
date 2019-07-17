@@ -44,7 +44,8 @@ class _base():
             raise Exception(result['status_message'])
         arr = []
         if key is not None:
-            [arr.append(_AsObj(**res)) for res in result[key]]
+            #[arr.append(_AsObj(**res)) for res in result[key]]
+            arr = [_AsObj(**res) for res in result[key]]
             
         else:
             return _AsObj(**result)
@@ -69,7 +70,7 @@ class _base():
             print("Rate limit reached. Sleeping for: %d" % sleep_time)
             time.sleep(abs(sleep_time))
             self._call(request_type, url, headers, payload)
-                
+ 
         json = req.json()
 
         return json
