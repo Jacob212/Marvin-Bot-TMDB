@@ -23,22 +23,24 @@ class _base():
     def _get_obj(result, key="results"):
         if 'success' in result and result['success'] is False:
             raise Exception(result['status_message'])
-        arr = []
-        if key is not None:
-            #[arr.append(_AsObj(**res)) for res in result[key]]
-            arr = [_AsObj(**res) for res in result[key]]
-
-        else:
+        if key is None:
             return _AsObj(**result)
+        
+        arr = [_AsObj(**res) for res in result[key]]
+ 
         if key == "results":
             result.pop(key)
             return arr,_AsObj(**result)
         return arr
 
-    def _call(self, request_type, url, headers=None, payload=None):
-        req = requests.request(request_type,url,data=payload,headers=headers)
+    def _call(self, request_type, url, headers=None, payload=None, disable_cache=None):
+        if disable_cache:
+            with requests_cache.disabled():
+                req = requests.request(request_type,url,data=payload,headers=headers)
+        else:
+            req = requests.request(request_type,url,data=payload,headers=headers)
+            print(f'Used cache: {req.from_cache}')
         headers = req.headers
-        print(f'Used cache: {req.from_cache}')
         if 'X-RateLimit-Remaining' in headers:
             self._remaining = int(headers['X-RateLimit-Remaining'])
 
@@ -104,7 +106,7 @@ class auth(_base):
 
 class lists(_base):
     def get(self,list_id,page=1):
-        return self._get_obj(self._call('GET',f'{self._url}4/list/{list_id}?api_key={self._api_key}&page={page}&sort_by=title.asc'))
+        return self._get_obj(self._call('GET',f'{self._url}4/list/{list_id}?api_key={self._api_key}&page={page}&sort_by=title.asc',disable_cache=True))
 
     def create(self,access_token):
         payload = "{\"name\":\"Watched - Marvin\",\"iso_639_1\":\"en\"}"
