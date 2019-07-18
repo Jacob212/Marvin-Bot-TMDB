@@ -62,7 +62,7 @@ class display_handler():
                     self.results,extra = search.multi(self.args["query"],page)
                 elif str(self.context.command) == "watched":
                     embed = discord.Embed(title="Watched list of:",description=self.args["mention"])
-                    self.results,extra = lists.get(self.args["listID"],page)
+                    self.results,extra = lists.get(self.args["listID"],self.args["latest"],page)
                 for res in self.results:
                     if res.media_type == "movie":
                         message += f'{self.results.index(res)+1} - Movie: {res.title}\n'
@@ -159,14 +159,17 @@ class generalCommands(commands.Cog):
         await globals()[context.message.author].arrowPages(page)
 
     @commands.command(description="",brief="",aliases=["Watched"])
-    async def watched(self,context,*arg):
+    async def watched(self,context,*args):
         options = {}
         options["mention"] = context.author.mention
+        options["latest"] = "title.asc"
         searchUser = context.author.id
-        for x in arg:
+        for x in args:
             if re.match("(<@!?)[0-9]*(>)",x):
                 searchUser = int(re.findall("\d+",x)[0])
                 options["mention"] = x
+            elif x == "-latest":
+                options["latest"] = "original_order.desc"
         c.execute("SELECT listID FROM accounts WHERE discordID = ?;",(searchUser,))
         options["listID"] = c.fetchall()[0][0]
         page = 1

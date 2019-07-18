@@ -105,8 +105,8 @@ class auth(_base):
         return self._get_obj(self._call('DELETE',f'{self._url}4/auth/access_token',headers=headers,payload=payload) ,key=None)
 
 class lists(_base):
-    def get(self,list_id,page=1):
-        return self._get_obj(self._call('GET',f'{self._url}4/list/{list_id}?api_key={self._api_key}&page={page}&sort_by=title.asc',disable_cache=True))
+    def get(self,list_id,sort,page=1):
+        return self._get_obj(self._call('GET',f'{self._url}4/list/{list_id}?api_key={self._api_key}&page={page}&sort_by={sort}',disable_cache=True))
 
     def create(self,access_token):
         payload = "{\"name\":\"Watched - Marvin\",\"iso_639_1\":\"en\"}"
