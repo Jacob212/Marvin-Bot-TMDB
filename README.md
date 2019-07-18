@@ -1,6 +1,6 @@
 # Marvin-Bot
 
-[![Codacy Badge](https://api.codacy.com/project/badge/Grade/2362f7470294466c922e692d2f7cdcec)](https://www.codacy.com/app/Jacob212/Marvin-Bot-TMDB?utm_source=github.com&amp;utm_medium=referral&amp;utm_content=Jacob212/Marvin-Bot-TMDB&amp;utm_campaign=Badge_Grade)
+[![CodeFactor](https://www.codefactor.io/repository/github/jacob212/marvin-bot-tmdb/badge)](https://www.codefactor.io/repository/github/jacob212/marvin-bot-tmdb)
 [![Build Status](https://travis-ci.org/Jacob212/Marvin-Bot-TMDB.svg?branch=master)](https://travis-ci.org/Jacob212/Marvin-Bot-TMDB)
 
 This bot is used to store information about users on whether they have wathced a movie/tv show.
