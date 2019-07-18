@@ -190,19 +190,19 @@ class generalCommands(commands.Cog):
         else:
             await context.send("That is not a valid option")
 
-    @commands.command()
-    async def discover_movie(self,context,*args):
-        arg = " ".join(args)
-        search,pages = discover.discover_movie(arg)
-        message = ""
-        for res in search:
-            if res.media_type == "movie":
-                message += f'{res.title}  {res.id}  {res.media_type}\n'
-            else:
-                message += f'{res.name}  {res.id}  {res.media_type}\n'
-        embed = discord.Embed(title="Search results:",description="bob")
-        embed.add_field(name=f'Page: {pages.page}/{pages.total_pages}   Total results:{pages.total_results}',value=message)
-        await context.send(embed=embed)
+    # @commands.command()
+    # async def discover_movie(self,context,*args):
+    #     arg = " ".join(args)
+    #     search,pages = discover.discover_movie(arg)
+    #     message = ""
+    #     for res in search:
+    #         if res.media_type == "movie":
+    #             message += f'{res.title}  {res.id}  {res.media_type}\n'
+    #         else:
+    #             message += f'{res.name}  {res.id}  {res.media_type}\n'
+    #     embed = discord.Embed(title="Search results:",description="bob")
+    #     embed.add_field(name=f'Page: {pages.page}/{pages.total_pages}   Total results:{pages.total_results}',value=message)
+    #     await context.send(embed=embed)
 
     @commands.command(description="",brief="",aliases=["Setup"])
     async def setup(self,context):

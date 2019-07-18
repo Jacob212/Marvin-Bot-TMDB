@@ -25,7 +25,7 @@ class _base():
             raise Exception(result['status_message'])
         if key is None:
             return _AsObj(**result)
-        
+
         arr = [_AsObj(**res) for res in result[key]]
  
         if key == "results":
