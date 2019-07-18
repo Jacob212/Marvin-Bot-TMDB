@@ -15,19 +15,22 @@ lists = api_handler.lists()
 details = api_handler.details()
 
 cfg = (
-    ("original_name", "Original Title", None),
-    ("original_title", "Original Title", None),
-    ("release_date", None, None),
-    ("genres", None, lambda v: ", ".join(genre['name'] for genre in v)),
-    ("runtime", "Run Time", '{0} minutes'.format),
-    ("languages", "Languages", lambda v: ", ".join(language.upper() for language in v)),
-    ("spoken_languages", "Languages", lambda v: ", ".join(language['name'] for language in v)),
-    ("number_of_seasons", "Seasons", None),
-    ("number_of_episodes", "Episodes", None)
+    ("original_name", "Original Title", False, None),
+    ("original_title", "Original Title", False, None),
+    ("release_date", None, True, None),
+    ("number_of_seasons", "Seasons", True, None),
+    ("number_of_episodes", "Episodes", True, None),
+    ("runtime", "Run Time", True, '{0} minutes'.format),
+    ("episode_run_time", "Episode run time", True, lambda v: '{0} minutes'.format(", ".join(str(time) for time in v))),
+    ("languages", "Languages", True, lambda v: ", ".join(language.upper() for language in v)),
+    ("spoken_languages", "Languages", True, lambda v: ", ".join(language['name'] for language in v)),
+    ("genres", None, False, lambda v: ", ".join(genre['name'] for genre in v)),
+    ("vote_average", "User score", True, lambda v: '{0}%'.format(int(v*10))),
+    ("vote_count", "Votes", True, None)
 )
 
 def embed_format(embed, detail):
-    for attr, name, fmt in cfg:
+    for attr, name, inline, fmt in cfg:
         try:
             value = getattr(detail, attr)
         except AttributeError:
@@ -36,7 +39,7 @@ def embed_format(embed, detail):
             name = attr.replace('_', ' ').title()
         if fmt is not None:
             value = fmt(value)
-        embed.add_field(name=name, value=value)
+        embed.add_field(name=name, value=value, inline=inline)
     try:
         value = getattr(detail, "backdrop_path")
     except AttributeError:
