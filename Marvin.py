@@ -5,6 +5,7 @@ import asyncio
 from itertools import cycle
 import discord
 from discord.ext import commands
+from api_handler import purge_cache
 
 F = open("Token.txt", "r")#Reads bot token from text file.
 TOKEN = F.read()
@@ -27,6 +28,13 @@ async def change_status():
         await client.change_presence(activity=discord.Activity(name=next(msgs), type=3))
         await asyncio.sleep(10)
 
+#Clears the requests cache of expired responses every hour
+async def auto_purge():
+    await client.wait_until_ready()
+    while not client.is_closed():
+        purge_cache()
+        await asyncio.sleep(3600)
+
 #list of all cogs that should be loaded on startup
 initial_extensions = ['cogs.owner', 'cogs.general']
 
@@ -47,5 +55,6 @@ async def on_ready():
     print(client.user.id)
     print('------')
 
+client.loop.create_task(auto_purge())
 client.loop.create_task(change_status())
 client.run(TOKEN)
