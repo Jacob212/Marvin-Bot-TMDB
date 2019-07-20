@@ -63,7 +63,7 @@ class _AsObj:
     def __init__(self, **entries):
         self.__dict__.update(entries)
 
-class search(_base):
+class Search(_base):
     def multi(self, query, page=1):
         return self._get_obj(self._call('GET', f'{self._url}3/search/multi?api_key={self._api_key}&language=en-US&include_adult=true&query="{query}"&page={str(page)}'))
 
@@ -73,14 +73,14 @@ class search(_base):
     def tv(self, query, page=1):
         return self._get_obj(self._call('GET', f'{self._url}3/search/tv?api_key={self._api_key}&language=en-US&include_adult=true&query="{query}"&page={str(page)}'))
 
-class details(_base):
+class Details(_base):
     def movie(self, movie_id):
         return _AsObj(**self._call('GET', f'{self._url}3/movie/{movie_id}?api_key={self._api_key}&language=en-US'))
 
     def tv(self, tv_id):
         return _AsObj(**self._call('GET', f'{self._url}3/tv/{tv_id}?api_key={self._api_key}&language=en-US'))
 
-class auth(_base):
+class Auth(_base):
     def request(self):
         payload = "{\"redirect_to\":\"http://www.themoviedb.org/\"}"
         headers = {
@@ -105,7 +105,7 @@ class auth(_base):
         }
         return self._get_obj(self._call('DELETE', f'{self._url}4/auth/access_token', headers=headers, payload=payload), key=None)
 
-class lists(_base):
+class Lists(_base):
     def get(self, list_id, sort, page=1):
         return self._get_obj(self._call('GET', f'{self._url}4/list/{list_id}?api_key={self._api_key}&page={page}&sort_by={sort}', disable_cache=True))
 
