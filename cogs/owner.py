@@ -25,7 +25,7 @@ class OwnerCog(commands.Cog):
     #command for unloading cogs. format ?unload cogs."cog_name"
     @commands.command(name='unload', aliases=["Unload"], hidden=True)
     @commands.is_owner()
-    async def unload_cog(self,  context,  *,  cog: str):
+    async def unload_cog(self, context, *, cog: str):
         try:
             self.client.unload_extension(cog)
         except Exception as e:
