@@ -28,4 +28,4 @@ class ErrorHandlingCog(commands.Cog):#The cog its self
 
 
 def setup(client):#adds cog to main bot
-    client.add_cog(errorHandlingCog(client))
+    client.add_cog(ErrorHandlingCog(client))

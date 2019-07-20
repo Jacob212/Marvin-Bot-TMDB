@@ -14,7 +14,7 @@ Auth = api_handler.auth()
 Lists = api_handler.lists()
 Details = api_handler.details()
 
-embed_cfg = (
+Embed_cfg = (
     ("original_name", "Original Title", False, None),
     ("original_title", "Original Title", False, None),
     ("release_date", None, True, None),
@@ -30,7 +30,7 @@ embed_cfg = (
 )
 
 def embed_format(embed, detail):
-    for attr, name, inline, fmt in cfg:
+    for attr, name, inline, fmt in Embed_cfg:
         try:
             value = getattr(detail, attr)
         except AttributeError:
@@ -53,7 +53,7 @@ class Display_Handler():
         self.context = context
         self.args = args
 
-    async def arrow_Pages(self, page):
+    async def Arrow_pages(self, page):
         while True:
             message = ""
             if "movies" not in self.args and "shows" not in self.args:
@@ -145,11 +145,11 @@ class Display_Handler():
                 reaction, user = await self.client.wait_for("reaction_add", check=lambda r, u: (r.emoji == "✅" or r.emoji == "❌") and u.id == self.context.message.author.id and r.message.id == msg2.id)
                 if reaction.emoji == "✅":
                     C.execute("SELECT discordID, accessToken, accountID, listID FROM accounts WHERE discordID = ?;", (self.context.author.id,))
-                    account_Details = C.fetchone()
+                    Account_details = C.fetchone()
                     payload = "{\"items\":[{\"media_type\":\""+self.results[index].media_type+"\",\"media_id\":"+str(self.results[index].id)+",\"comment\": \"S:"+season+" E:"+episode+"\"}]}"
-                    results, extra = lists.add_items(account_Details[3], account_Details[1], payload)
+                    results, extra = Lists.add_items(Account_details[3], Account_details[1], payload)
                     if self.results[index].media_type == "tv":
-                        results, extra = lists.update_items(account_Details[3], account_Details[1], payload)
+                        results, extra = Lists.update_items(Account_details[3], Account_details[1], payload)
                 await msg2.delete()
                 break
 
@@ -171,25 +171,25 @@ class GeneralCommands(commands.Cog):
         options["query"] = " ".join(query)
         page = 1
         globals()[context.message.author] = Display_Handler(self.client, context, options)
-        await globals()[context.message.author].arrow_Pages(page)
+        await globals()[context.message.author].Arrow_pages(page)
 
     @commands.command(description="", brief="", aliases=["Watched"])
     async def watched(self, context, *args):
         options = {}
         options["mention"] = context.author.mention
         options["latest"] = "title.asc"
-        search_User = context.author.id
+        Search_user = context.author.id
         for X in args:
             if re.match("(<@!?)[0-9]*(>)", X):
-                search_User = int(re.findall("\d+", X)[0])
+                Search_user = int(re.findall("\d+", X)[0])
                 options["mention"] = X
             elif X == "-latest":
                 options["latest"] = "original_order.desc"
-        C.execute("SELECT listID FROM accounts WHERE discordID = ?;", (search_User, ))
+        C.execute("SELECT listID FROM accounts WHERE discordID = ?;", (Search_user, ))
         options["listID"] = C.fetchall()[0][0]
         page = 1
         globals()[context.message.author] = Display_Handler(self.client, context, options)
-        await globals()[context.message.author].arrow_Pages(page)
+        await globals()[context.message.author].Arrow_pages(page)
 
     @commands.command(description="", brief="", aliases=["Select"])
     async def select(self, context, arg=None):
@@ -236,9 +236,9 @@ class GeneralCommands(commands.Cog):
             msg = await self.client.wait_for('message', check=lambda m: isinstance(m.channel, discord.DMChannel) and m.content == "approved")
             response2 = Auth.access(response.request_token)
             print(response2)
-            response3 = lists.create(response2.access_token)
+            response3 = Lists.create(response2.access_token)
             C.execute("INSERT INTO accounts VALUES(?,?,?,?,?)", (context.author.name, context.author.id, response2.access_token, response2.account_id, response3.id))
-            conn.commit()
+            Conn.commit()
         else:
             await context.send("You are already setup", delete_after=10)
 
@@ -264,7 +264,7 @@ class GeneralCommands(commands.Cog):
     #             await context.send("One or more of your options are wrong")
     #             break
     #     else:
-    #         globals()[context.message.author.id] = arrow_Pages(self.client,context,params=params,tv=tv)
+    #         globals()[context.message.author.id] = Arrow_pages(self.client,context,params=params,tv=tv)
     #         await globals()[context.message.author.id].display()
 
     # @commands.command()
@@ -285,4 +285,4 @@ class GeneralCommands(commands.Cog):
     #             params[key] = arg
 
 def setup(client):
-    client.add_cog(generalCommands(client))
+    client.add_cog(GeneralCommands(client))
