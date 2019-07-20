@@ -2,14 +2,15 @@ import requests
 import requests_cache
 import time
 
-requests_cache.install_cache(cache_name='TMDB-cache', backend='sqlite', expire_after=600)
-requests_cache.remove_expired_responses()
+requests_cache.install_cache(cache_name='TMDB-cache', backend='sqlite', expire_after=3600)
 
 f = open("api.txt","r")#Reads api and read access token needed to use the api
 KEY = f.readline().strip("\n")
 TOKEN = f.readline()
 f.close()
 
+def purge_cache():
+    requests_cache.remove_expired_responses()
 
 class _base():
     def __init__(self):
@@ -122,3 +123,10 @@ class lists(_base):
             'content-type': "application/json;charset=utf-8"
             }
         return self._get_obj(self._call('POST',f'{self._url}4/list/{list_id}/items',headers=headers,payload=payload))
+
+    def update_items(self,list_id,access_token,payload):
+        headers = {
+            'authorization': f'Bearer {access_token}',
+            'content-type': "application/json;charset=utf-8"
+            }
+        return self._get_obj(self._call('PUT',f'{self._url}4/list/{list_id}/items',headers=headers,payload=payload))
