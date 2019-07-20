@@ -101,10 +101,10 @@ class DisplayHandler():
     async def details(self, index):
         if index <= len(self.results):
             if self.results[index].media_type == "movie" or "movies" in self.args:
-                detail = Details.movie(self.results[index].id)
+                detail = DETAILS.movie(self.results[index].id)
                 embed = discord.Embed(title=detail.title, description=f'{detail.overview}', url=f'https://www.imdb.com/title/{detail.imdb_id}', color=self.context.message.author.color.value)
             elif self.results[index].media_type == "tv" or "tv" in self.args:
-                detail = Details.tv(self.results[index].id)
+                detail = DETAILS.tv(self.results[index].id)
                 embed = discord.Embed(title=detail.name, description=f'{detail.overview}', color=self.context.message.author.color.value)
             embed_format(embed, detail)
         else:
