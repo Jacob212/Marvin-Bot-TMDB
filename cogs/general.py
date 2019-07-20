@@ -9,10 +9,10 @@ C = CONN.cursor()
 C.execute("CREATE TABLE IF NOT EXISTS accounts (userName TEXT NOT NULL,discordID INTEGER NOT NULL PRIMARY KEY UNIQUE,accessToken  TEXT UNIQUE,accountID TEXT UNIQUE,listID INTEGER UNIQUE);")
 CONN.commit()
 
-Search = api_handler.Search()
-Auth = api_handler.Auth()
-Lists = api_handler.Lists()
-Details = api_handler.Details()
+SEARCH = api_handler.Search()
+AUTH = api_handler.Auth()
+LISTS = api_handler.Lists()
+DETAILS = api_handler.Details()
 
 EMBED_CFG = (
     ("original_name", "Original Title", False, None),
@@ -62,10 +62,10 @@ class DisplayHandler():
             if "movies" not in self.args and "shows" not in self.args:
                 if str(self.context.command) == "search":
                     embed = discord.Embed(title="Search results for:", description=self.args["query"])
-                    self.results, self.extra = Search.multi(self.args["query"], page)
+                    self.results, self.extra = SEARCH.multi(self.args["query"], page)
                 elif str(self.context.command) == "watched":
                     embed = discord.Embed(title="Watched list of:", description=self.args["mention"])
-                    self.results, self.extra = Lists.get(self.args["listID"], self.args["latest"], page)
+                    self.results, self.extra = LISTS.get(self.args["listID"], self.args["latest"], page)
                 for res in self.results:
                     if res.media_type == "movie":
                         message += f'{self.results.index(res)+1} - Movie: {res.title}\n'
@@ -75,12 +75,12 @@ class DisplayHandler():
                         message += f'{self.results.index(res)+1} - Person: {res.name}\n'
             elif "movies" in self.args and str(self.context.command) == "search":
                 embed = discord.Embed(title="Search results for:", description=self.args["query"])
-                self.results, self.extra = Search.movie(self.args["query"], page)
+                self.results, self.extra = SEARCH.movie(self.args["query"], page)
                 for res in self.results:
                     message += f'{self.results.index(res)+1} - Movie: {res.title}\n'
             elif "shows" in self.args and str(self.context.command) == "search":
                 embed = discord.Embed(title="Search results for:", description=self.args["query"])
-                self.results, self.extra = Search.tv(self.args["query"], page)
+                self.results, self.extra = SEARCH.tv(self.args["query"], page)
                 for res in self.results:
                     message += f'{self.results.index(res)+1} - TV: {res.name}\n'
             embed.add_field(name=f'Page: {self.extra.page}/{self.extra.total_pages}   Total results: {self.extra.total_results}', value=message)
@@ -150,9 +150,9 @@ class DisplayHandler():
                     C.execute("SELECT discordID, accessToken, accountID, listID FROM accounts WHERE discordID = ?;", (self.context.author.id,))
                     account_details = C.fetchone()
                     payload = "{\"items\":[{\"media_type\":\""+self.results[index].media_type+"\",\"media_id\":"+str(self.results[index].id)+",\"comment\": \"S:"+season+" E:"+episode+"\"}]}"
-                    results, extra = Lists.add_items(account_details[3], account_details[1], payload)
+                    results, extra = LISTS.add_items(account_details[3], account_details[1], payload)
                     if self.results[index].media_type == "tv":
-                        results, extra = Lists.update_items(account_details[3], account_details[1], payload)
+                        results, extra = LISTS.update_items(account_details[3], account_details[1], payload)
                 await msg2.delete()
                 break
 
@@ -233,13 +233,13 @@ class GeneralCommands(commands.Cog):
         await context.message.delete()
         C.execute("SELECT discordID, accessToken, accountID FROM accounts WHERE discordID = ?;", (context.author.id,))
         if C.fetchall() == []:
-            response = Auth.request()
+            response = AUTH.request()
             embed = discord.Embed(title="Link", description="To use all the features of this bot you will need an account with the movie database and approve the bot to have access ", url=f'https://www.themoviedb.org/auth/access?request_token={response.request_token}', color=context.message.author.color.value)
             await context.author.send(embed=embed)
             await self.client.wait_for('message', check=lambda m: isinstance(m.channel, discord.DMChannel) and m.content == "approved")
-            response2 = Auth.access(response.request_token)
+            response2 = AUTH.access(response.request_token)
             print(response2)
-            response3 = Lists.create(response2.access_token)
+            response3 = LISTS.create(response2.access_token)
             C.execute("INSERT INTO accounts VALUES(?,?,?,?,?)", (context.author.name, context.author.id, response2.access_token, response2.account_id, response3.id))
             CONN.commit()
         else:
