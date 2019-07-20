@@ -4,17 +4,17 @@ import discord
 import api_handler
 from discord.ext import commands
 
-conn = sqlite3.connect("discord.db")
-c = conn.cursor()
-c.execute("CREATE TABLE IF NOT EXISTS accounts (userName TEXT NOT NULL,discordID INTEGER NOT NULL PRIMARY KEY UNIQUE,accessToken  TEXT UNIQUE,accountID TEXT UNIQUE,listID INTEGER UNIQUE);")
-conn.commit()
+Conn = sqlite3.connect("discord.db")
+C = Conn.cursor()
+C.execute("CREATE TABLE IF NOT EXISTS accounts (userName TEXT NOT NULL,discordID INTEGER NOT NULL PRIMARY KEY UNIQUE,accessToken  TEXT UNIQUE,accountID TEXT UNIQUE,listID INTEGER UNIQUE);")
+Conn.commit()
 
-search = api_handler.search()
-auth = api_handler.auth()
-lists = api_handler.lists()
-details = api_handler.details()
+Search = api_handler.search()
+Auth = api_handler.auth()
+Lists = api_handler.lists()
+Details = api_handler.details()
 
-cfg = (
+embed_cfg = (
     ("original_name", "Original Title", False, None),
     ("original_title", "Original Title", False, None),
     ("release_date", None, True, None),
@@ -47,22 +47,22 @@ def embed_format(embed, detail):
     else:
         embed.set_image(url=f'https://image.tmdb.org/t/p/original{value}')
 
-class display_handler():
+class Display_Handler():
     def __init__(self, client, context, args):
         self.client = client
         self.context = context
         self.args = args
 
-    async def arrowPages(self, page):
+    async def arrow_Pages(self, page):
         while True:
             message = ""
             if "movies" not in self.args and "shows" not in self.args:
                 if str(self.context.command) == "search":
                     embed = discord.Embed(title="Search results for:", description=self.args["query"])
-                    self.results, extra = search.multi(self.args["query"], page)
+                    self.results, extra = Search.multi(self.args["query"], page)
                 elif str(self.context.command) == "watched":
                     embed = discord.Embed(title="Watched list of:", description=self.args["mention"])
-                    self.results, extra = lists.get(self.args["listID"], self.args["latest"], page)
+                    self.results, extra = Lists.get(self.args["listID"], self.args["latest"], page)
                 for res in self.results:
                     if res.media_type == "movie":
                         message += f'{self.results.index(res)+1} - Movie: {res.title}\n'
@@ -72,12 +72,12 @@ class display_handler():
                         message += f'{self.results.index(res)+1} - Person: {res.name}\n'
             elif "movies" in self.args and str(self.context.command) == "search":
                 embed = discord.Embed(title="Search results for:", description=self.args["query"])
-                self.results, extra = search.movie(self.args["query"], page)
+                self.results, extra = Search.movie(self.args["query"], page)
                 for res in self.results:
                     message += f'{self.results.index(res)+1} - Movie: {res.title}\n'
             elif "shows" in self.args and str(self.context.command) == "search":
                 embed = discord.Embed(title="Search results for:", description=self.args["query"])
-                self.results, extra = search.tv(self.args["query"], page)
+                self.results, extra = Search.tv(self.args["query"], page)
                 for res in self.results:
                     message += f'{self.results.index(res)+1} - TV: {res.name}\n'
             embed.add_field(name=f'Page: {extra.page}/{extra.total_pages}   Total results: {extra.total_results}', value=message)
@@ -98,10 +98,10 @@ class display_handler():
     async def details(self, index):
         if index <= len(self.results):
             if self.results[index].media_type == "movie" or "movies" in self.args:
-                detail = details.movie(self.results[index].id)
+                detail = Details.movie(self.results[index].id)
                 embed = discord.Embed(title=detail.title, description=f'{detail.overview}', url=f'https://www.imdb.com/title/{detail.imdb_id}', color=self.context.message.author.color.value)
             elif self.results[index].media_type == "tv" or "tv" in self.args:
-                detail = details.tv(self.results[index].id)
+                detail = Details.tv(self.results[index].id)
                 embed = discord.Embed(title=detail.name, description=f'{detail.overview}', color=self.context.message.author.color.value)
             embed_format(embed, detail)
         else:
@@ -144,16 +144,16 @@ class display_handler():
             while True:
                 reaction, user = await self.client.wait_for("reaction_add", check=lambda r, u: (r.emoji == "✅" or r.emoji == "❌") and u.id == self.context.message.author.id and r.message.id == msg2.id)
                 if reaction.emoji == "✅":
-                    c.execute("SELECT discordID, accessToken, accountID, listID FROM accounts WHERE discordID = ?;", (self.context.author.id,))
-                    accountDetails = c.fetchone()
+                    C.execute("SELECT discordID, accessToken, accountID, listID FROM accounts WHERE discordID = ?;", (self.context.author.id,))
+                    account_Details = C.fetchone()
                     payload = "{\"items\":[{\"media_type\":\""+self.results[index].media_type+"\",\"media_id\":"+str(self.results[index].id)+",\"comment\": \"S:"+season+" E:"+episode+"\"}]}"
-                    results, extra = lists.add_items(accountDetails[3], accountDetails[1], payload)
+                    results, extra = lists.add_items(account_Details[3], account_Details[1], payload)
                     if self.results[index].media_type == "tv":
-                        results, extra = lists.update_items(accountDetails[3], accountDetails[1], payload)
+                        results, extra = lists.update_items(account_Details[3], account_Details[1], payload)
                 await msg2.delete()
                 break
 
-class generalCommands(commands.Cog):
+class GeneralCommands(commands.Cog):
     def __init__(self, client):
         self.client = client
 
@@ -170,26 +170,26 @@ class generalCommands(commands.Cog):
                 query.append(part)
         options["query"] = " ".join(query)
         page = 1
-        globals()[context.message.author] = display_handler(self.client, context, options)
-        await globals()[context.message.author].arrowPages(page)
+        globals()[context.message.author] = Display_Handler(self.client, context, options)
+        await globals()[context.message.author].arrow_Pages(page)
 
     @commands.command(description="", brief="", aliases=["Watched"])
     async def watched(self, context, *args):
         options = {}
         options["mention"] = context.author.mention
         options["latest"] = "title.asc"
-        searchUser = context.author.id
-        for x in args:
-            if re.match("(<@!?)[0-9]*(>)", x):
-                searchUser = int(re.findall("\d+", x)[0])
-                options["mention"] = x
-            elif x == "-latest":
+        search_User = context.author.id
+        for X in args:
+            if re.match("(<@!?)[0-9]*(>)", X):
+                search_User = int(re.findall("\d+", X)[0])
+                options["mention"] = X
+            elif X == "-latest":
                 options["latest"] = "original_order.desc"
-        c.execute("SELECT listID FROM accounts WHERE discordID = ?;", (searchUser, ))
-        options["listID"] = c.fetchall()[0][0]
+        C.execute("SELECT listID FROM accounts WHERE discordID = ?;", (search_User, ))
+        options["listID"] = C.fetchall()[0][0]
         page = 1
-        globals()[context.message.author] = display_handler(self.client, context, options)
-        await globals()[context.message.author].arrowPages(page)
+        globals()[context.message.author] = Display_Handler(self.client, context, options)
+        await globals()[context.message.author].arrow_Pages(page)
 
     @commands.command(description="", brief="", aliases=["Select"])
     async def select(self, context, arg=None):
@@ -228,16 +228,16 @@ class generalCommands(commands.Cog):
     @commands.command(description="", brief="", aliases=["Setup"])
     async def setup(self, context):
         await context.message.delete()
-        c.execute("SELECT discordID, accessToken, accountID FROM accounts WHERE discordID = ?;", (context.author.id,))
-        if c.fetchall() == []:
-            response = auth.request()
+        C.execute("SELECT discordID, accessToken, accountID FROM accounts WHERE discordID = ?;", (context.author.id,))
+        if C.fetchall() == []:
+            response = Auth.request()
             embed = discord.Embed(title="Link", description="To use all the features of this bot you will need an account with the movie database and approve the bot to have access ", url=f'https://www.themoviedb.org/auth/access?request_token={response.request_token}', color=context.message.author.color.value)
             await context.author.send(embed=embed)
             msg = await self.client.wait_for('message', check=lambda m: isinstance(m.channel, discord.DMChannel) and m.content == "approved")
-            response2 = auth.access(response.request_token)
+            response2 = Auth.access(response.request_token)
             print(response2)
             response3 = lists.create(response2.access_token)
-            c.execute("INSERT INTO accounts VALUES(?,?,?,?,?)", (context.author.name, context.author.id, response2.access_token, response2.account_id, response3.id))
+            C.execute("INSERT INTO accounts VALUES(?,?,?,?,?)", (context.author.name, context.author.id, response2.access_token, response2.account_id, response3.id))
             conn.commit()
         else:
             await context.send("You are already setup", delete_after=10)
@@ -264,7 +264,7 @@ class generalCommands(commands.Cog):
     #             await context.send("One or more of your options are wrong")
     #             break
     #     else:
-    #         globals()[context.message.author.id] = arrowPages(self.client,context,params=params,tv=tv)
+    #         globals()[context.message.author.id] = arrow_Pages(self.client,context,params=params,tv=tv)
     #         await globals()[context.message.author.id].display()
 
     # @commands.command()

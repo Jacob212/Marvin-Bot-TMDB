@@ -1,12 +1,13 @@
+#A cog for recording any errors and sending them to my discord server.
 from discord.ext import commands
 import discord
 
-class errorHandlingCog(commands.Cog):
+class ErrorHandlingCog(commands.Cog):#The cog its self
     def __init__(self, client):
         self.client = client
 
     @commands.Cog.listener()
-    async def on_command_error(self, context, error):
+    async def on_command_error(self, context, error):#error catcher
         if isinstance(error, commands.NoPrivateMessage):
             await context.message.channel.send("**private messages.**" + context.message.author.mention, delete_after=10)
         if isinstance(error, commands.MissingRequiredArgument):
@@ -26,5 +27,5 @@ class errorHandlingCog(commands.Cog):
 
 
 
-def setup(client):
+def setup(client):#adds cog to main bot
     client.add_cog(errorHandlingCog(client))

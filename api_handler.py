@@ -4,10 +4,10 @@ import requests_cache
 
 requests_cache.install_cache(cache_name='TMDB-cache', backend='sqlite', expire_after=3600)
 
-f = open("api.txt", "r")#Reads api and read access token needed to use the api
-KEY = f.readline().strip("\n")
-TOKEN = f.readline()
-f.close()
+F = open("api.txt", "r")#Reads api and read access token needed to use the api
+KEY = F.readline().strip("\n")
+TOKEN = F.readline()
+F.close()
 
 def purge_cache():
     requests_cache.remove_expired_responses()
