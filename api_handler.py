@@ -21,7 +21,7 @@ class _base():
         self._read_access_token = TOKEN
 
     @staticmethod
-    def _get_obj(result,  key="results"):
+    def _get_obj(result, key="results"):
         if 'success' in result and result['success'] is False:
             raise Exception(result['status_message'])
         if key is None:
@@ -60,7 +60,7 @@ class _base():
         return json
 
 class _AsObj:
-    def __init__(self,  **entries):
+    def __init__(self, **entries):
         self.__dict__.update(entries)
 
 class search(_base):
@@ -87,7 +87,7 @@ class auth(_base):
             'authorization': f'Bearer {self._read_access_token}',
             'content-type': 'application/json;charset=utf-8'
         }
-        return self._get_obj(self._call('POST', f'{self._url}4/auth/request_token', headers=headers, payload=payload),  key=None)
+        return self._get_obj(self._call('POST', f'{self._url}4/auth/request_token', headers=headers, payload=payload), key=None)
 
     def access(self, request_token):
         payload = '{"request_token":"'+request_token+'"}'
@@ -95,7 +95,7 @@ class auth(_base):
             'authorization': f'Bearer {self._read_access_token}',
             'content-type': 'application/json;charset=utf-8'
         }
-        return self._get_obj(self._call('POST', f'{self._url}4/auth/access_token', headers=headers, payload=payload),  key=None)
+        return self._get_obj(self._call('POST', f'{self._url}4/auth/access_token', headers=headers, payload=payload), key=None)
 
     def delete(self, access_token):
         payload = '{"access_token":"'+access_token+'"}'
@@ -103,7 +103,7 @@ class auth(_base):
             'authorization': f'Bearer {self._read_access_token}',
             'content-type': 'application/json;charset=utf-8'
         }
-        return self._get_obj(self._call('DELETE', f'{self._url}4/auth/access_token', headers=headers, payload=payload) , key=None)
+        return self._get_obj(self._call('DELETE', f'{self._url}4/auth/access_token', headers=headers, payload=payload), key=None)
 
 class lists(_base):
     def get(self, list_id, sort, page=1):

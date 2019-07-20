@@ -5,7 +5,7 @@ from api_handler import purge_cache
 
 #cog for owner only commands
 class OwnerCog(commands.Cog):
-    def __init__(self,  client):
+    def __init__(self, client):
         self.client = client
 
     async def cog_command_error(self, context, error):
@@ -14,7 +14,7 @@ class OwnerCog(commands.Cog):
     #command for loading cogs. format ?load cogs."cog_name"
     @commands.command(name='load', aliases=["Load"], hidden=True)
     @commands.is_owner()
-    async def load_cog(self,  context,  *,  cog: str):
+    async def load_cog(self, context, *, cog: str):
         try:
             self.client.load_extension(cog)
         except Exception as e:
@@ -36,7 +36,7 @@ class OwnerCog(commands.Cog):
     #command for reloading cogs. format ?reload cogs."cog_name"
     @commands.command(name='reload', aliases=["Reload"], hidden=True)
     @commands.is_owner()
-    async def reload_cog(self,  context,  *,  cog: str):
+    async def reload_cog(self, context, *, cog: str):
         try:
             self.client.unload_extension(cog)
             self.client.load_extension(cog)
