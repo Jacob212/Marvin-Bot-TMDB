@@ -1,4 +1,3 @@
-import subprocess
 import discord
 from discord.ext import commands
 from api_handler import purge_cache
@@ -66,18 +65,6 @@ class OwnerCog(commands.Cog):
         for guild in self.client.guilds:
             embed.add_field(name=f'{guild.name} - {guild.id}', value=f'Owner: {guild.owner.mention}  Members: {guild.member_count}  Large: {guild.large}  Features: {guild.features}  Splash: {guild.splash}  Region: {guild.region}')
         await context.send(embed=embed)
-
-    #pulls the latest update from github.
-    @commands.command(name="update", aliases=["Update"], hidden=True)
-    @commands.is_owner()
-    async def update_bot(self, context):
-        await context.message.delete()
-        try:
-            returned_value = subprocess.check_output("git pull", shell=True)
-            embed = discord.Embed(title="Github Update", description=f'{returned_value.decode("utf-8")}', color=discord.Colour.green())
-        except Exception as e:
-            embed = discord.Embed(title="Github Update Failed", description=f'Update failed with following error: {type(e).__name__} - {e}', color=discord.Colour.red())
-        await self.client.get_channel(538719054479884300).send(embed=embed)
 
 def setup(client):
     client.add_cog(OwnerCog(client))
