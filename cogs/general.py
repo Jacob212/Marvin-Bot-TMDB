@@ -67,7 +67,7 @@ class display_handler():
                     if res.media_type == "movie":
                         message += f'{self.results.index(res)+1} - Movie: {res.title}\n'
                     elif res.media_type == "tv":
-                        message += f'{self.results.index(res)+1} - TV: {res.name}\n'
+                        message += f'{self.results.index(res)+1} - TV: {res.name} {extra.comments["tv:"+str(res.id)] if str(self.context.command) == "watched" else ""}\n'
                     elif res.media_type == "person":
                         message += f'{self.results.index(res)+1} - Person: {res.name}\n'
             elif "movies" in self.args and str(self.context.command) == "search":
@@ -122,10 +122,23 @@ class display_handler():
     async def add_watchlist(self,index=None):
         if index <= len(self.results):
             if self.results[index].media_type == "movie":
+                season = ""
+                episode = ""
                 embed = discord.Embed(title=f'Are you sure you want to add {self.results[index].title} to your watched list')
+                msg2 = await self.context.send(embed=embed)
             elif self.results[index].media_type == "tv":
-                embed = discord.Embed(title=f'Are you sure you want to add {self.results[index].name} to your watched list')
-            msg2 = await self.context.send(embed=embed)
+                embed = discord.Embed(title=f'What season of {self.results[index].name} have you watched up too?')
+                msg2 = await self.context.send(embed=embed)
+                msg = await self.client.wait_for('message', check=lambda m: m.channel == self.context.channel and m.content.isdigit())
+                season = msg.content
+                await msg.delete()
+                embed = discord.Embed(title=f'What episode of {self.results[index].name} season {season} have you watched up too?')
+                await msg2.edit(embed=embed)
+                msg = await self.client.wait_for('message', check=lambda m: m.channel == self.context.channel and m.content.isdigit())
+                episode = msg.content
+                await msg.delete()
+                embed = discord.Embed(title=f'Are you sure you want to add {self.results[index].name} - {season} - {episode} to your watched list')
+                await msg2.edit(embed=embed)
             await msg2.add_reaction("✅")
             await msg2.add_reaction("❌")
             while True:
@@ -133,8 +146,10 @@ class display_handler():
                 if reaction.emoji == "✅":
                     c.execute("SELECT discordID, accessToken, accountID, listID FROM accounts WHERE discordID = ?;",(self.context.author.id,))
                     accountDetails = c.fetchone()
-                    payload = "{\"items\":[{\"media_type\":\""+self.results[index].media_type+"\",\"media_id\":"+str(self.results[index].id)+"}]}"
+                    payload = "{\"items\":[{\"media_type\":\""+self.results[index].media_type+"\",\"media_id\":"+str(self.results[index].id)+",\"comment\": \"S:"+season+" E:"+episode+"\"}]}"
                     results,extra = lists.add_items(accountDetails[3],accountDetails[1],payload)
+                    if self.results[index].media_type == "tv":
+                        results,extra = lists.update_items(accountDetails[3],accountDetails[1],payload)
                 await msg2.delete()
                 break
 
