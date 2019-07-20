@@ -3,13 +3,10 @@ Settings for the bot can be changed here. Like command prefix and status message
 This is also where the bot loads all the cogs from /cogs"""
 import asyncio
 from itertools import cycle
+import os
 import discord
 from discord.ext import commands
 from api_handler import purge_cache
-
-F = open("Token.txt", "r")#Reads bot token from text file.
-TOKEN = F.read()
-F.close()
 
 def get_prefix(client, message):#
     prefixes = ['?']#allowed prefixes
@@ -53,4 +50,4 @@ async def on_ready():#Prints that bot has logged in when ready.
 
 client.loop.create_task(auto_purge())
 client.loop.create_task(change_status())
-client.run(TOKEN)
+client.run(os.environ.get("DISCORD_BOT_TOKEN"))

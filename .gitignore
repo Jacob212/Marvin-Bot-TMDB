@@ -1,8 +1,6 @@
 
-Token.txt
 keywords.txt
 discord.db
-api.txt
 *.pyc
 Marvin-Bot-TMDB.sublime-workspace
 Marvin-Bot-TMDB.sublime-project
@@ -10,3 +8,5 @@ Marvin-Bot-TMDB.sublime-project
 coverage.xml
 htmlcov/
 *.sqlite
+run.py
+environ.txt

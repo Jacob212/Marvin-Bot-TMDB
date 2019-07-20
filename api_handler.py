@@ -1,13 +1,9 @@
 import time
 import requests
 import requests_cache
+import os
 
 requests_cache.install_cache(cache_name='TMDB-cache', backend='sqlite', expire_after=3600)
-
-F = open("api.txt", "r")#Reads api and read access token needed to use the api
-KEY = F.readline().strip("\n")
-TOKEN = F.readline()
-F.close()
 
 def purge_cache():
     requests_cache.remove_expired_responses()
@@ -17,8 +13,8 @@ class _base():
         self._url = 'https://api.themoviedb.org/'
         self._remaining = 40
         self._reset = None
-        self._api_key = KEY
-        self._read_access_token = TOKEN
+        self._api_key = os.environ.get("TMDB_API_KEY")
+        self._read_access_token = os.environ.get("TMDB_READ_ACCESS_TOKEN")
 
     @staticmethod
     def _get_obj(result, key="results"):
