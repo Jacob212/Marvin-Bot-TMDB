@@ -161,9 +161,9 @@ class GeneralCommands(commands.Cog):
                     C.execute("SELECT discordID, accessToken, accountID, listID FROM accounts WHERE discordID = ?;", (context.author.id,))
                     account_details = C.fetchone()
                     payload = "{\"items\":[{\"media_type\":\""+results[index].media_type+"\",\"media_id\":"+str(results[index].id)+",\"comment\": \"S:"+season+" E:"+episode+"\"}]}"
-                    results, extra = LISTS.add_items(account_details[3], account_details[1], payload)
+                    added, extra = LISTS.add_items(account_details[3], account_details[1], payload)
                     if results[index].media_type == "tv":
-                        results, extra = LISTS.update_items(account_details[3], account_details[1], payload)
+                        added, extra = LISTS.update_items(account_details[3], account_details[1], payload)
                 await bots_message.delete()
                 break
 
