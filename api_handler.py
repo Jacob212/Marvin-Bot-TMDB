@@ -1,7 +1,7 @@
 import time
+import os
 import requests
 import requests_cache
-import os
 
 requests_cache.install_cache(cache_name='TMDB-cache', backend='sqlite', expire_after=3600)
 
