@@ -52,7 +52,7 @@ class GeneralCommands(commands.Cog):
     def __init__(self, client):
         self.client = client
 
-    async def arrow_pages(self, context, options, page, bots_message=None):
+    async def arrow_pages(self, context, options, page):
         while True:
             message = ""
             if "movies" not in options and "shows" not in options:
@@ -80,10 +80,10 @@ class GeneralCommands(commands.Cog):
                 for res in results:
                     message += f'{results.index(res)+1} - TV: {res.name}\n'
             embed.add_field(name=f'Page: {extra.page}/{extra.total_pages}   Total results: {extra.total_results}', value=message)
-            if bots_message is None:
-                bots_message = await context.send(embed=embed)
-            else:
+            try:
                 await bots_message.edit(embed=embed)
+            except:
+                bots_message = await context.send(embed=embed)
             await bots_message.add_reaction("◀")
             await bots_message.add_reaction("▶")
             done, pending = await asyncio.wait([
@@ -111,10 +111,10 @@ class GeneralCommands(commands.Cog):
 
     async def details(self, context, options, results, bots_message, index):
         if index <= len(results):
-            if results[index].media_type == "movie" or "movies" in options:
+            if "movies" in options or results[index].media_type == "movie":
                 detail = DETAILS.movie(results[index].id)
                 embed = discord.Embed(title=detail.title, description=f'{detail.overview}', url=f'https://www.imdb.com/title/{detail.imdb_id}', color=context.message.author.color.value)
-            elif results[index].media_type == "tv" or "tv" in options:
+            elif "tv" in options or results[index].media_type == "tv":
                 detail = DETAILS.tv(results[index].id)
                 embed = discord.Embed(title=detail.name, description=f'{detail.overview}', color=context.message.author.color.value)
             embed_format(embed, detail)
@@ -171,13 +171,13 @@ class GeneralCommands(commands.Cog):
     async def search(self, context, *args):
         options = {}
         query = []
-        for part in args:
-            if part == "--shows":
+        for arg in args:
+            if arg == "-shows":
                 options["shows"] = True
-            elif part == "--movies":
+            elif arg == "-movies":
                 options["movies"] = True
             else:
-                query.append(part)
+                query.append(arg)
         options["query"] = " ".join(query)
         page = 1
         await self.arrow_pages(context, options, page)
@@ -188,11 +188,11 @@ class GeneralCommands(commands.Cog):
         options["mention"] = context.author.mention
         options["latest"] = "title.asc"
         search_user = context.author.id
-        for part in args:
-            if re.match("(<@!?)[0-9]*(>)", part):
-                search_user = int(re.findall("\d+", part)[0])
-                options["mention"] = part
-            elif part == "-latest":
+        for arg in args:
+            if re.match("(<@!?)[0-9]*(>)", arg):
+                search_user = int(re.findall("\d+", arg)[0])
+                options["mention"] = arg
+            elif arg == "-latest":
                 options["latest"] = "original_order.desc"
         C.execute("SELECT listID FROM accounts WHERE discordID = ?;", (search_user, ))
         options["listID"] = C.fetchall()[0][0]
