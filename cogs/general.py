@@ -90,24 +90,24 @@ class GeneralCommands(commands.Cog):
                 self.client.wait_for("message", check=lambda m: m.channel == context.channel and m.content.isdigit()),
                 self.client.wait_for("reaction_add", check=lambda r, u: (r.emoji == "▶" or r.emoji == "◀") and u.id == context.message.author.id and r.message.id == bots_message.id)
                 ], return_when=asyncio.FIRST_COMPLETED)
+            for future in pending:
+                future.cancel()  # we don't need these anymore
             try:
                 response = done.pop().result()
             except:
-                continue
-            for future in pending:
-               future.cancel()  # we don't need these anymore
-            print("test")
-            if type(response) is tuple:
-                reaction = response[0]
-                if reaction.emoji == "▶" and len(results) == 20:
-                    page += 1
-                elif reaction.emoji == "◀" and page != 1:
-                    page -= 1
-                await bots_message.remove_reaction("▶", context.message.author)
-                await bots_message.remove_reaction("◀", context.message.author)
-            else:
-                await response.delete()
-                await details(self.client, context, options, results, bots_message, int(response.content)-1)
+                pass
+            finally:
+                if isinstance(response, tuple):
+                    reaction = response[0]
+                    if reaction.emoji == "▶" and len(results) == 20:
+                        page += 1
+                    elif reaction.emoji == "◀" and page != 1:
+                        page -= 1
+                    await bots_message.remove_reaction("▶", context.message.author)
+                    await bots_message.remove_reaction("◀", context.message.author)
+                else:
+                    await response.delete()
+                    await self.details(context, options, results, bots_message, int(response.content)-1)
 
     async def details(self, context, options, results, bots_message, index):
         if index <= len(results):
@@ -131,7 +131,7 @@ class GeneralCommands(commands.Cog):
                 break
             elif reaction.emoji == "⏬":
                 await bots_message.remove_reaction("⏬", context.message.author)
-                await add_watchlist(self.client, context, results, index)
+                await self.add_watchlist(context, results, index)
 
     async def add_watchlist(self, context, results, index):
         if index <= len(results):
