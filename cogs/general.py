@@ -1,18 +1,12 @@
 import asyncio
-import sqlite3
 import re
 import datetime
 import discord
 from discord.ext import commands
 import api_handler
-
-CONN = sqlite3.connect("discord.db")
-C = CONN.cursor()
-C.execute("CREATE TABLE IF NOT EXISTS accounts (userName TEXT NOT NULL,discordID INTEGER NOT NULL PRIMARY KEY UNIQUE,accessToken  TEXT UNIQUE,accountID TEXT UNIQUE,listID INTEGER UNIQUE);")
-CONN.commit()
+from utils.sql import get_account_details
 
 SEARCH = api_handler.Search()
-AUTH = api_handler.Auth()
 LISTS = api_handler.Lists()
 DETAILS = api_handler.Details()
 
@@ -133,6 +127,7 @@ class GeneralCommands(commands.Cog):
             reaction, user = await self.client.wait_for("reaction_add", check=lambda r, u: r.emoji in ["◀", "⏬", "❌"] and u.id == context.message.author.id and r.message.id == bots_message.id)
             if reaction.emoji == "◀":
                 await bots_message.remove_reaction("⏬", self.client.user)
+                await bots_message.remove_reaction("❌", self.client.user)
                 await bots_message.remove_reaction("◀", context.message.author)
                 break
             elif reaction.emoji == "⏬":
@@ -167,12 +162,11 @@ class GeneralCommands(commands.Cog):
             while True:
                 reaction, user = await self.client.wait_for("reaction_add", check=lambda r, u: r.emoji in ["✅", "❌"] and u.id == context.message.author.id and r.message.id == bots_message.id)
                 if reaction.emoji == "✅":
-                    C.execute("SELECT discordID, accessToken, accountID, listID FROM accounts WHERE discordID = ?;", (context.author.id,))
-                    account_details = C.fetchone()
+                    account_details = get_account_details(context.author.id)
                     payload = "{\"items\":[{\"media_type\":\""+results[index].media_type+"\",\"media_id\":"+str(results[index].id)+",\"comment\": \"S:"+season+" E:"+episode+"\"}]}"
-                    LISTS.add_items(account_details[3], account_details[1], payload)
+                    LISTS.add_items(account_details[2], account_details[0], payload)
                     if results[index].media_type == "tv":
-                        LISTS.update_items(account_details[3], account_details[1], payload)
+                        LISTS.update_items(account_details[2], account_details[0], payload)
                 await bots_message.delete()
                 break
 
@@ -196,7 +190,7 @@ class GeneralCommands(commands.Cog):
                 await bots_message.delete()
                 break
 
-    @commands.command(description="", brief="", aliases=["Search"])
+    @commands.command(description="Use -movies or -shows to filter to only one. You can select an item by typing its number in chat.", brief="Used to search for movies and tv shows.", aliases=["Search"])
     async def search(self, context, *args):
         options = {}
         query = []
@@ -211,7 +205,7 @@ class GeneralCommands(commands.Cog):
         page = 1
         await self.arrow_pages(context, options, page)
 
-    @commands.command(description="", brief="", aliases=["Watched"])
+    @commands.command(description="You can also edit your list here by typing the number in chat that you want to change.", brief="Used to show yours or others watched list. (eg ?watched @Riot212)", aliases=["Watched"])
     async def watched(self, context, *args):
         options = {}
         options["mention"] = context.author.mention
@@ -223,8 +217,7 @@ class GeneralCommands(commands.Cog):
                 options["mention"] = arg
             elif arg == "-latest":
                 options["latest"] = "original_order.desc"
-        C.execute("SELECT listID FROM accounts WHERE discordID = ?;", (search_user, ))
-        options["listID"] = C.fetchall()[0][0]
+        options["listID"] = get_account_details(search_user)[2]
         page = 1
         await self.arrow_pages(context, options, page)
 
@@ -252,23 +245,6 @@ class GeneralCommands(commands.Cog):
     #     embed = discord.Embed(title="Search results:", description="bob")
     #     embed.add_field(name=f'Page: {pages.page}/{pages.total_pages}   Total results:{pages.total_results}', value=message)
     #     await context.send(embed=embed)
-
-    @commands.command(description="", brief="", aliases=["Setup"])
-    async def setup(self, context):
-        await context.message.delete()
-        C.execute("SELECT discordID, accessToken, accountID FROM accounts WHERE discordID = ?;", (context.author.id,))
-        if C.fetchall() == []:
-            response = AUTH.request()
-            embed = discord.Embed(title="Link", description="To use all the features of this bot you will need an account with the movie database and approve the bot to have access ", url=f'https://www.themoviedb.org/auth/access?request_token={response.request_token}', color=context.message.author.color.value)
-            await context.author.send(embed=embed)
-            await self.client.wait_for('message', check=lambda m: isinstance(m.channel, discord.DMChannel) and m.content == "approved")
-            response2 = AUTH.access(response.request_token)
-            print(response2)
-            response3 = LISTS.create(response2.access_token)
-            C.execute("INSERT INTO accounts VALUES(?,?,?,?,?)", (context.author.name, context.author.id, response2.access_token, response2.account_id, response3.id))
-            CONN.commit()
-        else:
-            await context.send("You are already setup", delete_after=10)
 
     # @commands.command(name="filter",description="filter a list of movies by genre....etc")
     # async def filter_movies(self,context,*args):
