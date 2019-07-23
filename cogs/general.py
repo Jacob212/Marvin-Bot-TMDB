@@ -31,8 +31,7 @@ EMBED_CFG = (
     ("genres", None, False, lambda v: ", ".join(genre['name'] for genre in v)),
     ("vote_average", "User score", True, lambda v: '{0}%'.format(int(v*10))),
     ("vote_count", "Votes", True, None)
-    
-)
+    )
 
 def embed_format(embed, detail):
     for attr, name, inline, fmt in EMBED_CFG:
@@ -94,7 +93,7 @@ class GeneralCommands(commands.Cog):
             await bots_message.add_reaction("▶")
             done, pending = await asyncio.wait([
                 self.client.wait_for("message", check=lambda m: m.channel == context.channel and m.content.isdigit()),
-                self.client.wait_for("reaction_add", check=lambda r, u: r.emoji in ["◀","▶"] and u.id == context.message.author.id and r.message.id == bots_message.id)
+                self.client.wait_for("reaction_add", check=lambda r, u: r.emoji in ["◀", "▶"] and u.id == context.message.author.id and r.message.id == bots_message.id)
                 ], return_when=asyncio.FIRST_COMPLETED)
             for future in pending:
                 future.cancel()  # we don't need these anymore
@@ -131,7 +130,7 @@ class GeneralCommands(commands.Cog):
         await bots_message.add_reaction("⏬")
         await bots_message.add_reaction("❌")
         while True:
-            reaction, user = await self.client.wait_for("reaction_add", check=lambda r, u: r.emoji in ["◀","⏬","❌"] and u.id == context.message.author.id and r.message.id == bots_message.id)
+            reaction, user = await self.client.wait_for("reaction_add", check=lambda r, u: r.emoji in ["◀", "⏬", "❌"] and u.id == context.message.author.id and r.message.id == bots_message.id)
             if reaction.emoji == "◀":
                 await bots_message.remove_reaction("⏬", self.client.user)
                 await bots_message.remove_reaction("◀", context.message.author)
@@ -166,14 +165,14 @@ class GeneralCommands(commands.Cog):
             await bots_message.add_reaction("✅")
             await bots_message.add_reaction("❌")
             while True:
-                reaction, user = await self.client.wait_for("reaction_add", check=lambda r, u: r.emoji in ["✅","❌"] and u.id == context.message.author.id and r.message.id == bots_message.id)
+                reaction, user = await self.client.wait_for("reaction_add", check=lambda r, u: r.emoji in ["✅", "❌"] and u.id == context.message.author.id and r.message.id == bots_message.id)
                 if reaction.emoji == "✅":
                     C.execute("SELECT discordID, accessToken, accountID, listID FROM accounts WHERE discordID = ?;", (context.author.id,))
                     account_details = C.fetchone()
                     payload = "{\"items\":[{\"media_type\":\""+results[index].media_type+"\",\"media_id\":"+str(results[index].id)+",\"comment\": \"S:"+season+" E:"+episode+"\"}]}"
-                    added, extra = LISTS.add_items(account_details[3], account_details[1], payload)
+                    LISTS.add_items(account_details[3], account_details[1], payload)
                     if results[index].media_type == "tv":
-                        added, extra = LISTS.update_items(account_details[3], account_details[1], payload)
+                        LISTS.update_items(account_details[3], account_details[1], payload)
                 await bots_message.delete()
                 break
 
@@ -188,12 +187,12 @@ class GeneralCommands(commands.Cog):
             await bots_message.add_reaction("✅")
             await bots_message.add_reaction("❌")
             while True:
-                reaction, user = await self.client.wait_for("reaction_add", check=lambda r, u: r.emoji in ["✅","❌"] and u.id == context.message.author.id and r.message.id == bots_message.id)
+                reaction, user = await self.client.wait_for("reaction_add", check=lambda r, u: r.emoji in ["✅", "❌"] and u.id == context.message.author.id and r.message.id == bots_message.id)
                 if reaction.emoji == "✅":
                     C.execute("SELECT discordID, accessToken, accountID, listID FROM accounts WHERE discordID = ?;", (context.author.id,))
                     account_details = C.fetchone()
                     payload = "{\"items\":[{\"media_type\":\""+results[index].media_type+"\",\"media_id\":"+str(results[index].id)+"}]}"
-                    added, extra = LISTS.remove_items(account_details[3], account_details[1], payload)
+                    LISTS.remove_items(account_details[3], account_details[1], payload)
                 await bots_message.delete()
                 break
 
