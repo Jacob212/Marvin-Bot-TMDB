@@ -183,10 +183,9 @@ class GeneralCommands(commands.Cog):
             while True:
                 reaction, user = await self.client.wait_for("reaction_add", check=lambda r, u: r.emoji in ["✅", "❌"] and u.id == context.message.author.id and r.message.id == bots_message.id)
                 if reaction.emoji == "✅":
-                    C.execute("SELECT discordID, accessToken, accountID, listID FROM accounts WHERE discordID = ?;", (context.author.id,))
-                    account_details = C.fetchone()
+                    account_details = get_account_details(context.author.id)
                     payload = "{\"items\":[{\"media_type\":\""+results[index].media_type+"\",\"media_id\":"+str(results[index].id)+"}]}"
-                    LISTS.remove_items(account_details[3], account_details[1], payload)
+                    LISTS.remove_items(account_details[2], account_details[0], payload)
                 await bots_message.delete()
                 break
 
