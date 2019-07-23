@@ -126,3 +126,10 @@ class Lists(_base):
             'content-type': "application/json;charset=utf-8"
             }
         return self._get_obj(self._call('PUT', f'{self._url}4/list/{list_id}/items', headers=headers, payload=payload))
+
+    def remove_items(self, list_id, access_token, payload):
+        headers = {
+            'authorization': f'Bearer {access_token}',
+            'content-type': "application/json;charset=utf-8"
+            }
+        return self._get_obj(self._call('DELETE', f'{self._url}4/list/{list_id}/items', headers=headers, payload=payload))

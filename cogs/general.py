@@ -1,6 +1,7 @@
 import asyncio
 import sqlite3
 import re
+import datetime
 import discord
 from discord.ext import commands
 import api_handler
@@ -18,22 +19,27 @@ DETAILS = api_handler.Details()
 EMBED_CFG = (
     ("original_name", "Original Title", False, None),
     ("original_title", "Original Title", False, None),
-    ("release_date", None, True, None),
+    ("release_date", None, True, lambda v: datetime.datetime.strptime(v, '%Y-%m-%d').strftime('%d/%m/%Y')),
     ("number_of_seasons", "Seasons", True, None),
     ("number_of_episodes", "Episodes", True, None),
     ("runtime", "Run Time", True, '{0} minutes'.format),
-    ("episode_run_time", "Episode run time", True, lambda v: '{0} minutes'.format(", ".join(str(time) for time in v))),
+    ("episode_run_time", None, True, lambda v: '{0} minutes'.format(", ".join(str(time) for time in v))),
     ("languages", "Languages", True, lambda v: ", ".join(language.upper() for language in v)),
     ("spoken_languages", "Languages", True, lambda v: ", ".join(language['name'] for language in v)),
+    ("first_air_date", None, True, lambda v: datetime.datetime.strptime(v, '%Y-%m-%d').strftime('%d/%m/%Y')),
+    ("next_episode_to_air", None, True, lambda v: '{0} on {1}'.format(v["name"], datetime.datetime.strptime(v["air_date"], '%Y-%m-%d').strftime('%d/%m/%Y'))),
     ("genres", None, False, lambda v: ", ".join(genre['name'] for genre in v)),
     ("vote_average", "User score", True, lambda v: '{0}%'.format(int(v*10))),
     ("vote_count", "Votes", True, None)
+    
 )
 
 def embed_format(embed, detail):
     for attr, name, inline, fmt in EMBED_CFG:
         try:
             value = getattr(detail, attr)
+            if value is None:
+                continue
         except AttributeError:
             continue
         if name is None:
@@ -88,7 +94,7 @@ class GeneralCommands(commands.Cog):
             await bots_message.add_reaction("▶")
             done, pending = await asyncio.wait([
                 self.client.wait_for("message", check=lambda m: m.channel == context.channel and m.content.isdigit()),
-                self.client.wait_for("reaction_add", check=lambda r, u: (r.emoji == "▶" or r.emoji == "◀") and u.id == context.message.author.id and r.message.id == bots_message.id)
+                self.client.wait_for("reaction_add", check=lambda r, u: r.emoji in ["◀","▶"] and u.id == context.message.author.id and r.message.id == bots_message.id)
                 ], return_when=asyncio.FIRST_COMPLETED)
             for future in pending:
                 future.cancel()  # we don't need these anymore
@@ -123,8 +129,9 @@ class GeneralCommands(commands.Cog):
         await bots_message.edit(embed=embed)
         await bots_message.remove_reaction("▶", self.client.user)
         await bots_message.add_reaction("⏬")
+        await bots_message.add_reaction("❌")
         while True:
-            reaction, user = await self.client.wait_for("reaction_add", check=lambda r, u: (r.emoji == "⏬" or r.emoji == "◀") and u.id == context.message.author.id and r.message.id == bots_message.id)
+            reaction, user = await self.client.wait_for("reaction_add", check=lambda r, u: r.emoji in ["◀","⏬","❌"] and u.id == context.message.author.id and r.message.id == bots_message.id)
             if reaction.emoji == "◀":
                 await bots_message.remove_reaction("⏬", self.client.user)
                 await bots_message.remove_reaction("◀", context.message.author)
@@ -132,13 +139,16 @@ class GeneralCommands(commands.Cog):
             elif reaction.emoji == "⏬":
                 await bots_message.remove_reaction("⏬", context.message.author)
                 await self.add_watchlist(context, results, index)
+            elif reaction.emoji == "❌":
+                await bots_message.remove_reaction("❌", context.message.author)
+                await self.remove_watchlist(context, results, index)
 
     async def add_watchlist(self, context, results, index):
         if index <= len(results):
             if results[index].media_type == "movie":
                 season = ""
                 episode = ""
-                embed = discord.Embed(title=f'Are you sure you want to add {results[index].title} to your watched list')
+                embed = discord.Embed(title=f'Are you sure you want to add {results[index].title} to your watched list?')
                 bots_message = await context.send(embed=embed)
             elif results[index].media_type == "tv":
                 embed = discord.Embed(title=f'What season of {results[index].name} have you watched up too?')
@@ -156,7 +166,7 @@ class GeneralCommands(commands.Cog):
             await bots_message.add_reaction("✅")
             await bots_message.add_reaction("❌")
             while True:
-                reaction, user = await self.client.wait_for("reaction_add", check=lambda r, u: (r.emoji == "✅" or r.emoji == "❌") and u.id == context.message.author.id and r.message.id == bots_message.id)
+                reaction, user = await self.client.wait_for("reaction_add", check=lambda r, u: r.emoji in ["✅","❌"] and u.id == context.message.author.id and r.message.id == bots_message.id)
                 if reaction.emoji == "✅":
                     C.execute("SELECT discordID, accessToken, accountID, listID FROM accounts WHERE discordID = ?;", (context.author.id,))
                     account_details = C.fetchone()
@@ -164,6 +174,26 @@ class GeneralCommands(commands.Cog):
                     added, extra = LISTS.add_items(account_details[3], account_details[1], payload)
                     if results[index].media_type == "tv":
                         added, extra = LISTS.update_items(account_details[3], account_details[1], payload)
+                await bots_message.delete()
+                break
+
+    async def remove_watchlist(self, context, results, index):
+        if index <= len(results):
+            if results[index].media_type == "movie":
+                embed = discord.Embed(title=f'Are you sure you want to remove {results[index].title} from your watched list?')
+                bots_message = await context.send(embed=embed)
+            elif results[index].media_type == "tv":
+                embed = discord.Embed(title=f'Are you sure you want to remove {results[index].name} from your watched list?')
+                bots_message = await context.send(embed=embed)
+            await bots_message.add_reaction("✅")
+            await bots_message.add_reaction("❌")
+            while True:
+                reaction, user = await self.client.wait_for("reaction_add", check=lambda r, u: r.emoji in ["✅","❌"] and u.id == context.message.author.id and r.message.id == bots_message.id)
+                if reaction.emoji == "✅":
+                    C.execute("SELECT discordID, accessToken, accountID, listID FROM accounts WHERE discordID = ?;", (context.author.id,))
+                    account_details = C.fetchone()
+                    payload = "{\"items\":[{\"media_type\":\""+results[index].media_type+"\",\"media_id\":"+str(results[index].id)+"}]}"
+                    added, extra = LISTS.remove_items(account_details[3], account_details[1], payload)
                 await bots_message.delete()
                 break
 
