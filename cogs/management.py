@@ -1,8 +1,7 @@
-import asyncio
 import discord
 from discord.ext import commands
 import api_handler
-from utils.sql import *
+from utils.sql import get_account_details, setup_account, update_access_token, update_list_id
 
 AUTH = api_handler.Auth()
 LISTS = api_handler.Lists()
@@ -52,7 +51,7 @@ class ManagementCommands(commands.Cog):
             await context.send("You already have a list set up.", delete_after=10)
         except Exception as e:
             raise e
-            
+     
     @commands.command(description="", brief="!!Not working on the apis end.!! Deletes your watched list. This cannot be undone.", aliases=["Delete"], enabled=False)
     async def delete(self, context):
         await context.message.delete()
