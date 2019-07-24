@@ -5,13 +5,12 @@ import threading
 import discord
 from discord.ext import commands
 
-def thread_function(name, command):
+def thread_function(command):
     os.system(command)
 
 if __name__ == "__main__":
-    y = threading.Thread(target=thread_function, args=("main_bot","cd .. & python marvin.py"))
+    y = threading.Thread(target=thread_function, args=("cd .. & coverage run marvin.py",))
     y.start()
-    # x.join()
 
 #creates instance of the bot
 client = commands.Bot(command_prefix="!", description="Testing Bot")

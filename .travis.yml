@@ -1,5 +1,9 @@
 language: python
 install:
     - pip install -r requirements.txt
+    - pip install codecov
 
 script: python tests/test.py
+
+after_success:
+  - codecov
