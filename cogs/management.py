@@ -1,7 +1,7 @@
 import discord
 from discord.ext import commands
-from utils import api_handler
-from utils.sql import get_account_details, setup_account, update_access_token, update_list_id
+from .utils import api_handler
+from .utils.sql import get_account_details, setup_account, update_access_token, update_list_id
 
 AUTH = api_handler.Auth()
 LISTS = api_handler.Lists()

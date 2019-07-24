@@ -1,6 +1,6 @@
 import discord
 from discord.ext import commands
-from utils.api_handler import purge_cache
+from .utils.api_handler import purge_cache
 
 #cog for owner only commands
 class OwnerCog(commands.Cog):
