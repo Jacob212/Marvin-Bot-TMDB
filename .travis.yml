@@ -1,6 +1,5 @@
 language: python
 install:
     - pip install -r requirements.txt
-    - pip install codecov
-    #- pip install pylint
-script: coverage run marvin.py
+
+script: python tests/test.py

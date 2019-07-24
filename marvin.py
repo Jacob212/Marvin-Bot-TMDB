@@ -40,6 +40,12 @@ if __name__ == '__main__':
     for extension in INITIAL_EXTENSIONS:
         client.load_extension(extension)
 
+if os.environ.get("respond_to_bots") == "True":
+    @client.event
+    async def on_message(message):
+        ctx = await client.get_context(message)
+        await client.invoke(ctx)
+
 @client.event
 async def on_ready():#Prints that bot has logged in when ready.
     print('------')
