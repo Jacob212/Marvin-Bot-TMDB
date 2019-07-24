@@ -3,7 +3,7 @@ import re
 import datetime
 import discord
 from discord.ext import commands
-import utils.api_handler
+from utils import api_handler
 from utils.sql import get_account_details
 
 SEARCH = api_handler.Search()
