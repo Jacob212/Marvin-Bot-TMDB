@@ -65,8 +65,5 @@ class ManagementCommands(commands.Cog):
             update_list_id(context.author.id, None)
         await bots_message.delete()
 
-
-
-
 def setup(client):
     client.add_cog(ManagementCommands(client))
