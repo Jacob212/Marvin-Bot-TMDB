@@ -1,6 +1,6 @@
 import discord
 from discord.ext import commands
-import api_handler
+import utils.api_handler
 from utils.sql import get_account_details, setup_account, update_access_token, update_list_id
 
 AUTH = api_handler.Auth()

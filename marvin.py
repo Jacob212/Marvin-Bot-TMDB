@@ -6,7 +6,7 @@ from itertools import cycle
 import os
 import discord
 from discord.ext import commands
-from api_handler import purge_cache
+from utils.api_handler import purge_cache
 
 def get_prefix(client, message):#
     prefixes = ['?']#allowed prefixes
