@@ -45,13 +45,13 @@ class ManagementCommands(commands.Cog):
     @commands.command(description="", brief="Used to create new list if old one was deleted.", aliases=["List"], enabled=False)#hard to test this right now
     async def list(self, context):
         await context.message.delete()
-        listID = get_account_details(context.author.id)[2]
+        list_id = get_account_details(context.author.id)[2]
         try:
-            LISTS.get(listID)
+            LISTS.get(list_id)
             await context.send("You already have a list set up.", delete_after=10)
         except Exception as e:
             raise e
-     
+
     @commands.command(description="", brief="!!Not working on the apis end.!! Deletes your watched list. This cannot be undone.", aliases=["Delete"], enabled=False)
     async def delete(self, context):
         await context.message.delete()
