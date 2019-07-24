@@ -42,7 +42,7 @@ class ManagementCommands(commands.Cog):
             update_access_token(context.author.id, None)
         await bots_message.delete()
 
-    @commands.command(description="", brief="Used to create new list if old one was deleted.", aliases=["List"])
+    @commands.command(description="", brief="Used to create new list if old one was deleted.", aliases=["List"], enabled=False)#hard to test this right now
     async def list(self, context):
         await context.message.delete()
         listID = get_account_details(context.author.id)[2]

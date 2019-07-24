@@ -8,7 +8,7 @@ C.execute("CREATE TABLE IF NOT EXISTS accounts (userName TEXT NOT NULL,discordID
 CONN.commit()
 
 def get_account_details(discord_id):
-    C.execute("SELECT accessToken, accountID, listID FROM accounts WHERE discord_id = ?;", (discord_id,))
+    C.execute("SELECT accessToken, accountID, listID FROM accounts WHERE discordID = ?;", (discord_id,))
     return C.fetchone()
 
 def setup_account(discordName, discord_id, access_token, account_id, list_id):
@@ -16,9 +16,9 @@ def setup_account(discordName, discord_id, access_token, account_id, list_id):
     CONN.commit()
 
 def update_access_token(discord_id, access_token):
-    C.execute("UPDATE accounts set accessToken = ? WHERE discord_id = ?;", (access_token, discord_id))
+    C.execute("UPDATE accounts set accessToken = ? WHERE discordID = ?;", (access_token, discord_id))
     CONN.commit()
 
 def update_list_id(discord_id, list_id):
-    C.execute("UPDATE accounts SET listID = ? WHERE discord_id = ?;", (list_id, discord_id))
+    C.execute("UPDATE accounts SET listID = ? WHERE discordID = ?;", (list_id, discord_id))
     CONN.commit()
