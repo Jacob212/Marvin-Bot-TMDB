@@ -40,6 +40,7 @@ if __name__ == '__main__':
     for extension in INITIAL_EXTENSIONS:
         client.load_extension(extension)
 
+#allows my testing bot in the tests directory to control this bot when running in travis ci
 if os.environ.get("respond_to_bots") == "True":
     @client.event
     async def on_message(message):
