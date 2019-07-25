@@ -20,11 +20,11 @@ async def test_search_blank():
     print("Testing ?search")
     try:
         response = await client.wait_for("message", check=lambda m: m.author.id == 530876853104410624, timeout=10)
-    except asyncio.TimeoutError:
+    except asyncio.futures.TimeoutError:
         print("failed")
         return "failed" 
     else:
-        if len(response.embeds) > 1 or response.embeds[0].title != "Search results for:" or response.embeds[0].description != "":
+        if len(response.embeds) > 1 or response.embeds[0].title != "You have to enter something to search for." or response.embeds[0].description != "eg ?search the flash":
             print("failed")
             return "failed"
         print("passed")

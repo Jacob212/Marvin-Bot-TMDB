@@ -200,9 +200,13 @@ class GeneralCommands(commands.Cog):
                 options["movies"] = True
             else:
                 query.append(arg)
-        options["query"] = " ".join(query)
-        page = 1
-        await self.arrow_pages(context, options, page)
+        if not query:
+            embed = discord.Embed(title="You have to enter something to search for.",description="eg ?search the flash")
+            await context.send(embed=embed)
+        else:
+            options["query"] = " ".join(query)
+            page = 1
+            await self.arrow_pages(context, options, page)
 
     @commands.command(description="You can also edit your list here by typing the number in chat that you want to change.", brief="Used to show yours or others watched list. (eg ?watched @Riot212)", aliases=["Watched"])
     async def watched(self, context, *args):
