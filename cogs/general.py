@@ -47,147 +47,171 @@ def embed_format(embed, detail):
     else:
         embed.set_image(url=f'https://image.tmdb.org/t/p/original{value}')
 
-class GeneralCommands(commands.Cog):
-    def __init__(self, client):
-        self.client = client
 
-    async def arrow_pages(self, context, options, page):
-        while True:
+class DisplayHandler():
+    def __init__(self, client, context, options):
+        self.client = client
+        self.context = context
+        self.options = options
+        self.results = None
+        self.bots_message = None
+        self.run = True
+
+    async def arrow_pages(self, page):
+        while self.run:
             message = ""
-            if "movies" not in options and "shows" not in options:
-                if str(context.command) == "search":
-                    embed = discord.Embed(title="Search results for:", description=options["query"])
-                    results, extra = SEARCH.multi(options["query"], page)
-                elif str(context.command) == "watched":
-                    embed = discord.Embed(title="Watched list of:", description=options["mention"])
-                    results, extra = LISTS.get(options["listID"], options["latest"], page)
-                for res in results:
+            if "movies" not in self.options and "shows" not in self.options:
+                if str(self.context.command) == "search":
+                    embed = discord.Embed(title="Search results for:", description=self.options["query"])
+                    self.results, extra = SEARCH.multi(self.options["query"], page)
+                elif str(self.context.command) == "watched":
+                    embed = discord.Embed(title="Watched list of:", description=self.options["mention"])
+                    self.results, extra = LISTS.get(self.options["listID"], self.options["latest"], page)
+                for res in self.results:
                     if res.media_type == "movie":
-                        message += f'{results.index(res)+1} - Movie: {res.title}\n'
+                        message += f'{self.results.index(res)+1} - Movie: {res.title}\n'
                     elif res.media_type == "tv":
-                        message += f'{results.index(res)+1} - TV: {res.name} {extra.comments["tv:"+str(res.id)] if str(context.command) == "watched" else ""}\n'
+                        message += f'{self.results.index(res)+1} - TV: {res.name} {extra.comments["tv:"+str(res.id)] if str(self.context.command) == "watched" else ""}\n'
                     elif res.media_type == "person":
-                        message += f'{results.index(res)+1} - Person: {res.name}\n'
-            elif "movies" in options and str(context.command) == "search":
-                embed = discord.Embed(title="Search results for:", description=options["query"])
-                results, extra = SEARCH.movie(options["query"], page)
-                for res in results:
-                    message += f'{results.index(res)+1} - Movie: {res.title}\n'
-            elif "shows" in options and str(context.command) == "search":
-                embed = discord.Embed(title="Search results for:", description=options["query"])
-                results, extra = SEARCH.tv(options["query"], page)
-                for res in results:
-                    message += f'{results.index(res)+1} - TV: {res.name}\n'
+                        message += f'{self.results.index(res)+1} - Person: {res.name}\n'
+            elif "movies" in self.options and str(self.context.command) == "search":
+                embed = discord.Embed(title="Search results for:", description=self.options["query"])
+                self.results, extra = SEARCH.movie(self.options["query"], page)
+                for res in self.results:
+                    message += f'{self.results.index(res)+1} - Movie: {res.title}\n'
+            elif "shows" in self.options and str(self.context.command) == "search":
+                embed = discord.Embed(title="Search results for:", description=self.options["query"])
+                self.results, extra = SEARCH.tv(self.options["query"], page)
+                for res in self.results:
+                    message += f'{self.results.index(res)+1} - TV: {res.name}\n'
             embed.add_field(name=f'Page: {extra.page}/{extra.total_pages}   Total results: {extra.total_results}', value=message)
-            try:
-                await bots_message.edit(embed=embed)
-            except:
-                bots_message = await context.send(embed=embed)
-            await bots_message.add_reaction("◀")
-            await bots_message.add_reaction("▶")
+            if self.bots_message is None:
+                self.bots_message = await self.context.send(embed=embed)
+            else:
+                await self.bots_message.edit(embed=embed)
+            await self.bots_message.add_reaction("◀")
+            await self.bots_message.add_reaction("▶")
             done, pending = await asyncio.wait([
-                self.client.wait_for("message", check=lambda m: m.channel == context.channel and m.content.isdigit()),
-                self.client.wait_for("reaction_add", check=lambda r, u: r.emoji in ["◀", "▶"] and u.id == context.message.author.id and r.message.id == bots_message.id)
+                self.client.wait_for("message", timeout=600, check=lambda m: m.channel == self.context.channel and m.content.isdigit()),
+                self.client.wait_for("reaction_add", timeout=600, check=lambda r, u: r.emoji in ["◀", "▶"] and u.id == self.context.message.author.id and r.message.id == self.bots_message.id)
                 ], return_when=asyncio.FIRST_COMPLETED)
             for future in pending:
                 future.cancel()  # we don't need these anymore
             try:
                 response = done.pop().result()
-            except:
-                pass
-            finally:
+            except asyncio.TimeoutError:
+                break
+            else:
+                if not self.run:
+                    break
                 if isinstance(response, tuple):
                     reaction = response[0]
-                    if reaction.emoji == "▶" and len(results) == 20:
+                    if reaction.emoji == "▶" and len(self.results) == 20:
                         page += 1
                     elif reaction.emoji == "◀" and page != 1:
                         page -= 1
-                    await bots_message.remove_reaction("▶", context.message.author)
-                    await bots_message.remove_reaction("◀", context.message.author)
+                    await self.bots_message.remove_reaction("▶", self.context.message.author)
+                    await self.bots_message.remove_reaction("◀", self.context.message.author)
                 else:
                     await response.delete()
-                    await self.details(context, options, results, bots_message, int(response.content)-1)
+                    await self.details(int(response.content)-1)
 
-    async def details(self, context, options, results, bots_message, index):
-        if index <= len(results):
-            if "movies" in options or results[index].media_type == "movie":
-                detail = DETAILS.movie(results[index].id)
-                embed = discord.Embed(title=detail.title, description=f'{detail.overview}', url=f'https://www.imdb.com/title/{detail.imdb_id}', color=context.message.author.color.value)
-            elif "tv" in options or results[index].media_type == "tv":
-                detail = DETAILS.tv(results[index].id)
-                embed = discord.Embed(title=detail.name, description=f'{detail.overview}', color=context.message.author.color.value)
+    async def details(self, index):
+        if index <= len(self.results):
+            if "movies" in self.options or self.results[index].media_type == "movie":
+                detail = DETAILS.movie(self.results[index].id)
+                embed = discord.Embed(title=detail.title, description=f'{detail.overview}', url=f'https://www.imdb.com/title/{detail.imdb_id}', color=self.context.message.author.color.value)
+            elif "tv" in self.options or self.results[index].media_type == "tv":
+                detail = DETAILS.tv(self.results[index].id)
+                embed = discord.Embed(title=detail.name, description=f'{detail.overview}', color=self.context.message.author.color.value)
             embed_format(embed, detail)
         else:
             embed = discord.Embed(title="That is not an option", description="Please go back", color=discord.Colour.dark_red())
-        await bots_message.edit(embed=embed)
-        await bots_message.remove_reaction("▶", self.client.user)
-        await bots_message.add_reaction("⏬")
-        await bots_message.add_reaction("❌")
-        while True:
-            reaction, user = await self.client.wait_for("reaction_add", check=lambda r, u: r.emoji in ["◀", "⏬", "❌"] and u.id == context.message.author.id and r.message.id == bots_message.id)
+        await self.bots_message.edit(embed=embed)
+        await self.bots_message.remove_reaction("▶", self.client.user)
+        await self.bots_message.add_reaction("⏬")
+        await self.bots_message.add_reaction("❌")
+        while self.run:
+            try:
+                reaction, user = await self.client.wait_for("reaction_add", timeout=600, check=lambda r, u: r.emoji in ["◀", "⏬", "❌"] and u.id == self.context.message.author.id and r.message.id == self.bots_message.id)
+            except asyncio.TimeoutError:
+                self.run = False
+                break
             if reaction.emoji == "◀":
-                await bots_message.remove_reaction("⏬", self.client.user)
-                await bots_message.remove_reaction("❌", self.client.user)
-                await bots_message.remove_reaction("◀", context.message.author)
+                await self.bots_message.remove_reaction("⏬", self.client.user)
+                await self.bots_message.remove_reaction("❌", self.client.user)
+                await self.bots_message.remove_reaction("◀", self.context.message.author)
                 break
             elif reaction.emoji == "⏬":
-                await bots_message.remove_reaction("⏬", context.message.author)
-                await self.add_watchlist(context, results, index)
+                await self.bots_message.remove_reaction("⏬", self.context.message.author)
+                await self.add_watchlist(index)
             elif reaction.emoji == "❌":
-                await bots_message.remove_reaction("❌", context.message.author)
-                await self.remove_watchlist(context, results, index)
+                await self.bots_message.remove_reaction("❌", self.context.message.author)
+                await self.remove_watchlist(index)
 
-    async def add_watchlist(self, context, results, index):
-        if index <= len(results):
-            if results[index].media_type == "movie":
+    async def add_watchlist(self, index):
+        if index <= len(self.results):
+            if self.results[index].media_type == "movie":
                 season = ""
                 episode = ""
-                embed = discord.Embed(title=f'Are you sure you want to add {results[index].title} to your watched list?')
-                bots_message = await context.send(embed=embed)
-            elif results[index].media_type == "tv":
-                embed = discord.Embed(title=f'What season of {results[index].name} have you watched up too?')
-                bots_message = await context.send(embed=embed)
-                response = await self.client.wait_for('message', check=lambda m: m.channel == context.channel and m.content.isdigit())
+                embed = discord.Embed(title=f'Are you sure you want to add {self.results[index].title} to your watched list?')
+                self.bots_message = await self.context.send(embed=embed)
+            elif self.results[index].media_type == "tv":
+                embed = discord.Embed(title=f'What season of {self.results[index].name} have you watched up too?')
+                self.bots_message = await self.context.send(embed=embed)
+                response = await self.client.wait_for('message', check=lambda m: m.channel == self.context.channel and m.content.isdigit())
                 season = response.content
                 await response.delete()
-                embed = discord.Embed(title=f'What episode of {results[index].name} season {season} have you watched up too?')
-                await bots_message.edit(embed=embed)
-                response = await self.client.wait_for('message', check=lambda m: m.channel == context.channel and m.content.isdigit())
+                embed = discord.Embed(title=f'What episode of {self.results[index].name} season {season} have you watched up too?')
+                await self.bots_message.edit(embed=embed)
+                response = await self.client.wait_for('message', check=lambda m: m.channel == self.context.channel and m.content.isdigit())
                 episode = response.content
                 await response.delete()
-                embed = discord.Embed(title=f'Are you sure you want to add {results[index].name} - {season} - {episode} to your watched list')
-                await bots_message.edit(embed=embed)
-            await bots_message.add_reaction("✅")
-            await bots_message.add_reaction("❌")
-            while True:
-                reaction, user = await self.client.wait_for("reaction_add", check=lambda r, u: r.emoji in ["✅", "❌"] and u.id == context.message.author.id and r.message.id == bots_message.id)
+                embed = discord.Embed(title=f'Are you sure you want to add {self.results[index].name} - {season} - {episode} to your watched list')
+                await self.bots_message.edit(embed=embed)
+            await self.bots_message.add_reaction("✅")
+            await self.bots_message.add_reaction("❌")
+            while self.run:
+                try:
+                    reaction, user = await self.client.wait_for("reaction_add", timeout=600, check=lambda r, u: r.emoji in ["✅", "❌"] and u.id == self.context.message.author.id and r.message.id == self.bots_message.id)
+                except asyncio.TimeoutError:
+                    self.run = False
+                    break
                 if reaction.emoji == "✅":
-                    account_details = get_account_details(context.author.id)
-                    payload = "{\"items\":[{\"media_type\":\""+results[index].media_type+"\",\"media_id\":"+str(results[index].id)+",\"comment\": \"S:"+season+" E:"+episode+"\"}]}"
+                    account_details = get_account_details(self.context.author.id)
+                    payload = "{\"items\":[{\"media_type\":\""+self.results[index].media_type+"\",\"media_id\":"+str(self.results[index].id)+",\"comment\": \"S:"+season+" E:"+episode+"\"}]}"
                     LISTS.add_items(account_details[2], account_details[0], payload)
-                    if results[index].media_type == "tv":
+                    if self.results[index].media_type == "tv":
                         LISTS.update_items(account_details[2], account_details[0], payload)
-                await bots_message.delete()
+                await self.bots_message.delete()
                 break
 
-    async def remove_watchlist(self, context, results, index):
-        if index <= len(results):
-            if results[index].media_type == "movie":
-                embed = discord.Embed(title=f'Are you sure you want to remove {results[index].title} from your watched list?')
-                bots_message = await context.send(embed=embed)
-            elif results[index].media_type == "tv":
-                embed = discord.Embed(title=f'Are you sure you want to remove {results[index].name} from your watched list?')
-                bots_message = await context.send(embed=embed)
-            await bots_message.add_reaction("✅")
-            await bots_message.add_reaction("❌")
-            while True:
-                reaction, user = await self.client.wait_for("reaction_add", check=lambda r, u: r.emoji in ["✅", "❌"] and u.id == context.message.author.id and r.message.id == bots_message.id)
+    async def remove_watchlist(self, index):
+        if index <= len(self.results):
+            if self.results[index].media_type == "movie":
+                embed = discord.Embed(title=f'Are you sure you want to remove {self.results[index].title} from your watched list?')
+                self.bots_message = await self.context.send(embed=embed)
+            elif self.results[index].media_type == "tv":
+                embed = discord.Embed(title=f'Are you sure you want to remove {self.results[index].name} from your watched list?')
+                self.bots_message = await self.context.send(embed=embed)
+            await self.bots_message.add_reaction("✅")
+            await self.bots_message.add_reaction("❌")
+            while self.run:
+                try:
+                    reaction, user = await self.client.wait_for("reaction_add", timeout=600, check=lambda r, u: r.emoji in ["✅", "❌"] and u.id == self.context.message.author.id and r.message.id == self.bots_message.id)
+                except asyncio.TimeoutError:
+                    self.run = False
+                    break
                 if reaction.emoji == "✅":
-                    account_details = get_account_details(context.author.id)
-                    payload = "{\"items\":[{\"media_type\":\""+results[index].media_type+"\",\"media_id\":"+str(results[index].id)+"}]}"
+                    account_details = get_account_details(self.context.author.id)
+                    payload = "{\"items\":[{\"media_type\":\""+self.results[index].media_type+"\",\"media_id\":"+str(self.results[index].id)+"}]}"
                     LISTS.remove_items(account_details[2], account_details[0], payload)
-                await bots_message.delete()
+                await self.bots_message.delete()
                 break
+
+class GeneralCommands(commands.Cog):
+    def __init__(self, client):
+        self.client = client
 
     @commands.command(description="Use -movies or -shows to filter to only one. You can select an item by typing its number in chat.", brief="Used to search for movies and tv shows.", aliases=["Search"])
     async def search(self, context, *args):
@@ -206,7 +230,10 @@ class GeneralCommands(commands.Cog):
         else:
             options["query"] = " ".join(query)
             page = 1
-            await self.arrow_pages(context, options, page)
+            if context.author.id in globals():
+                globals()[context.author.id].run = False
+            globals()[context.author.id] = DisplayHandler(self.client, context, options)
+            await globals()[context.author.id].arrow_pages(page)
 
     @commands.command(description="You can also edit your list here by typing the number in chat that you want to change.", brief="Used to show yours or others watched list. (eg ?watched @Riot212)", aliases=["Watched"])
     async def watched(self, context, *args):
@@ -222,7 +249,10 @@ class GeneralCommands(commands.Cog):
                 options["latest"] = "original_order.desc"
         options["listID"] = get_account_details(search_user)[2]
         page = 1
-        await self.arrow_pages(context, options, page)
+        if context.author.id in globals():
+            globals()[context.author.id].run = False
+        globals()[context.author.id] = DisplayHandler(self.client, context, options)
+        await globals()[context.author.id].arrow_pages(page)
 
     #doesnt work now but i want to make it work later
     # @commands.command(description="", brief="", aliases=["Watch"])
