@@ -11,9 +11,13 @@ def get_account_details(discord_id):
     C.execute("SELECT accessToken, accountID, listID FROM accounts WHERE discordID = ?;", (discord_id,))
     return C.fetchone()
 
-def setup_account(discordName, discord_id, access_token, account_id, list_id):
-    C.execute("INSERT INTO accounts VALUES(?,?,?,?,?)", (discordName, discord_id, access_token, account_id, list_id))
+def setup_account(discord_name, discord_id, access_token, account_id, list_id):
+    C.execute("INSERT INTO accounts VALUES(?,?,?,?,?)", (discord_name, discord_id, access_token, account_id, list_id))
     CONN.commit()
+
+def update_account(discord_id, access_token, account_id, list_id):
+  C.execute("UPDATE accounts set access_token = ?, account_id = ?, list_id = ? WHERE dsicordID = ?;", (access_token, account_id, list_id, discord_id))
+  CONN.commit()
 
 def update_access_token(discord_id, access_token):
     C.execute("UPDATE accounts set accessToken = ? WHERE discordID = ?;", (access_token, discord_id))
