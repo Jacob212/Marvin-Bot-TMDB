@@ -225,7 +225,7 @@ class GeneralCommands(commands.Cog):
             else:
                 query.append(arg)
         if not query:
-            embed = discord.Embed(title="You have to enter something to search for.",description="eg ?search the flash")
+            embed = discord.Embed(title="You have to enter something to search for.", description="eg ?search the flash")
             await context.send(embed=embed)
         else:
             options["query"] = " ".join(query)

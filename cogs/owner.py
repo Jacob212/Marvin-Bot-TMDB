@@ -8,7 +8,7 @@ class OwnerCog(commands.Cog):
         self.client = client
 
     async def is_allowed(context):
-        return context.author.id in [130470072190894082,554442950575259658]
+        return context.author.id in [130470072190894082, 554442950575259658]
 
     async def cog_command_error(self, context, error):
         print(f'{context.command.qualified_name}: {error}')
