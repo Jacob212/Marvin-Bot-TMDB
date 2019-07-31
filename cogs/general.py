@@ -84,6 +84,8 @@ class DisplayHandler():
                 self.results, extra = SEARCH.tv(self.options["query"], page)
                 for res in self.results:
                     message += f'{self.results.index(res)+1} - TV: {res.name}\n'
+            if message == "":
+                message = "Nothing could be found for this search."
             embed.add_field(name=f'Page: {extra.page}/{extra.total_pages}   Total results: {extra.total_results}', value=message)
             if self.bots_message is None:
                 self.bots_message = await self.context.send(embed=embed)
