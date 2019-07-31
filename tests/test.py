@@ -9,8 +9,8 @@ def thread_function(command):
     os.system(command)
 
 if __name__ == "__main__":
-    y = threading.Thread(target=thread_function, args=("cd .. & coverage run marvin.py",))
-    y.start()
+    tested_bot_thread = threading.Thread(target=thread_function, args=("cd .. & coverage run marvin.py",))
+    tested_bot_thread.start()
 
 #creates instance of the bot
 client = commands.Bot(command_prefix="!", description="Testing Bot")
