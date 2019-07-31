@@ -24,17 +24,16 @@ basic_tests_list = (
 
 async def basic_tests(test):
     await client.get_channel(603641157120950282).send(test[0])
-    print("Testing ?search")
     try:
-        response = await client.wait_for("message", check=lambda m: m.author.id == 530876853104410624, timeout=10)
+        response = await client.wait_for("message", check=lambda m: m.author.id == 530876853104410624, timeout=20)
     except asyncio.futures.TimeoutError:
-        print("failed")
+        print(f'{test[0]} timeout')
         return "failed" 
     else:
         if len(response.embeds) > 1 or response.embeds[0].title != test[1][0] or response.embeds[0].description != test[1][1]:
-            print("failed")
+            print(f'{test[0]} failed')
             return "failed"
-        print("passed")
+        print(f'{test[0]} passed')
         return "passed"
 
 async def run_tests(tests):
