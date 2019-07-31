@@ -155,25 +155,25 @@ class DisplayHandler():
                 season = ""
                 episode = ""
                 embed = discord.Embed(title=f'Are you sure you want to add {self.results[index].title} to your watched list?')
-                self.bots_message = await self.context.send(embed=embed)
+                temp_message = await self.context.send(embed=embed)
             elif self.results[index].media_type == "tv":
                 embed = discord.Embed(title=f'What season of {self.results[index].name} have you watched up too?')
-                self.bots_message = await self.context.send(embed=embed)
+                temp_message = await self.context.send(embed=embed)
                 response = await self.client.wait_for('message', check=lambda m: m.channel == self.context.channel and m.content.isdigit())
                 season = response.content
                 await response.delete()
                 embed = discord.Embed(title=f'What episode of {self.results[index].name} season {season} have you watched up too?')
-                await self.bots_message.edit(embed=embed)
+                await temp_message.edit(embed=embed)
                 response = await self.client.wait_for('message', check=lambda m: m.channel == self.context.channel and m.content.isdigit())
                 episode = response.content
                 await response.delete()
                 embed = discord.Embed(title=f'Are you sure you want to add {self.results[index].name} - {season} - {episode} to your watched list')
-                await self.bots_message.edit(embed=embed)
-            await self.bots_message.add_reaction("✅")
-            await self.bots_message.add_reaction("❌")
+                await temp_message.edit(embed=embed)
+            await temp_message.add_reaction("✅")
+            await temp_message.add_reaction("❌")
             while self.run:
                 try:
-                    reaction, user = await self.client.wait_for("reaction_add", timeout=600, check=lambda r, u: r.emoji in ["✅", "❌"] and u.id == self.context.message.author.id and r.message.id == self.bots_message.id)
+                    reaction, user = await self.client.wait_for("reaction_add", timeout=600, check=lambda r, u: r.emoji in ["✅", "❌"] and u.id == self.context.message.author.id and r.message.id == temp_message.id)
                 except asyncio.TimeoutError:
                     self.run = False
                     break
@@ -183,22 +183,22 @@ class DisplayHandler():
                     LISTS.add_items(account_details[2], account_details[0], payload)
                     if self.results[index].media_type == "tv":
                         LISTS.update_items(account_details[2], account_details[0], payload)
-                await self.bots_message.delete()
+                await temp_message.delete()
                 break
 
     async def remove_watchlist(self, index):
         if index <= len(self.results):
             if self.results[index].media_type == "movie":
                 embed = discord.Embed(title=f'Are you sure you want to remove {self.results[index].title} from your watched list?')
-                self.bots_message = await self.context.send(embed=embed)
+                temp_message = await self.context.send(embed=embed)
             elif self.results[index].media_type == "tv":
                 embed = discord.Embed(title=f'Are you sure you want to remove {self.results[index].name} from your watched list?')
-                self.bots_message = await self.context.send(embed=embed)
-            await self.bots_message.add_reaction("✅")
-            await self.bots_message.add_reaction("❌")
+                temp_message = await self.context.send(embed=embed)
+            await temp_message.add_reaction("✅")
+            await temp_message.add_reaction("❌")
             while self.run:
                 try:
-                    reaction, user = await self.client.wait_for("reaction_add", timeout=600, check=lambda r, u: r.emoji in ["✅", "❌"] and u.id == self.context.message.author.id and r.message.id == self.bots_message.id)
+                    reaction, user = await self.client.wait_for("reaction_add", timeout=600, check=lambda r, u: r.emoji in ["✅", "❌"] and u.id == self.context.message.author.id and r.message.id == temp_message.id)
                 except asyncio.TimeoutError:
                     self.run = False
                     break
@@ -206,7 +206,7 @@ class DisplayHandler():
                     account_details = get_account_details(self.context.author.id)
                     payload = "{\"items\":[{\"media_type\":\""+self.results[index].media_type+"\",\"media_id\":"+str(self.results[index].id)+"}]}"
                     LISTS.remove_items(account_details[2], account_details[0], payload)
-                await self.bots_message.delete()
+                await temp_message.delete()
                 break
 
 class GeneralCommands(commands.Cog):
