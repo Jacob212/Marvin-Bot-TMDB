@@ -19,7 +19,8 @@ basic_tests_list = (
     ("?search", ("You have to enter something to search for.", "eg ?search the flash")),
     ("?search the flash", ("Search results for:", "the flash")),
     ("?search the flash -movies", ("Search results for:", "the flash")),
-    ("?search the flash -shows", ("Search results for:", "the flash"))
+    ("?search the flash -shows", ("Search results for:", "the flash")),
+    ("?search this isnt a in here", ("Search results for:", "this isnt a in here"))
     )
 
 async def basic_tests(test):
