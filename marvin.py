@@ -30,7 +30,7 @@ async def auto_purge():#Clears the requests cache of expired responses every hou
         await asyncio.sleep(3600)
 
 #list of all cogs that should be loaded on startup
-INITIAL_EXTENSIONS = ['cogs.owner', 'cogs.general', 'cogs.management']
+INITIAL_EXTENSIONS = ['cogs.owner', 'cogs.general', 'cogs.management', 'cogs.error_handling']
 
 #creates instance of the bot
 client = commands.Bot(command_prefix=get_prefix, description='My Bot')
