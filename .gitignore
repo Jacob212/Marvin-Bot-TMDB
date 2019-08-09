@@ -8,5 +8,4 @@ Marvin-Bot-TMDB.sublime-project
 coverage.xml
 htmlcov/
 *.sqlite
-run.py
-environ.txt
+*.bat
