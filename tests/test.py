@@ -68,15 +68,15 @@ async def reactions_test():
     return "passed"
 
 async def run_tests():
-    # for test in basic_embed_tests:
-    #     result = await basic_tests(test)
-    #     if result == "failed":
-    #         await asyncio.sleep(2)
-    #         await client.get_channel(603641157120950282).send("?shutdown")
-    #         await client.close()
-    #         sys.exit(1)
-    #     await asyncio.sleep(2)
-    # else:
+    for test in basic_embed_tests:
+        result = await basic_tests(test)
+        if result == "failed":
+            await asyncio.sleep(2)
+            await client.get_channel(603641157120950282).send("?shutdown")
+            await client.close()
+            sys.exit(1)
+        await asyncio.sleep(2)
+    else:
         result = await reactions_test()
         if result == "failed":
             await asyncio.sleep(2)
