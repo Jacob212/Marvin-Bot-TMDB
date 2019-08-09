@@ -36,7 +36,6 @@ class _base():
                 req = requests.request(request_type, url, data=payload, headers=headers)
         else:
             req = requests.request(request_type, url, data=payload, headers=headers)
-            print(f'Used cache: {req.from_cache}')
         headers = req.headers
         if 'X-RateLimit-Remaining' in headers:
             self._remaining = int(headers['X-RateLimit-Remaining'])
