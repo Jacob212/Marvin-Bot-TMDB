@@ -2,7 +2,6 @@ import asyncio
 import os
 import sys
 import threading
-import discord
 from discord.ext import commands
 
 def thread_function(command):
@@ -15,7 +14,7 @@ if __name__ == "__main__":
 #creates instance of the bot
 client = commands.Bot(command_prefix="!", description="Testing Bot")
 
-basic_embed_tests = (
+BASIC_EMBED_TESTS = (
     ("?search", ("You have to enter something to search for.", "eg ?search the flash")),
     ("?search the flash", ("Search results for:", "the flash")),
     ("?search the flash -movies", ("Search results for:", "the flash")),
@@ -68,7 +67,7 @@ async def reactions_test():
     return "passed"
 
 async def run_tests():
-    for test in basic_embed_tests:
+    for test in BASIC_EMBED_TESTS:
         result = await basic_tests(test)
         if result == "failed":
             await asyncio.sleep(2)
