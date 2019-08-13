@@ -3,7 +3,7 @@ import re
 import discord
 from discord.ext import commands
 from utils.sql import get_account_details
-from utils.display_handler import DisplayHandler
+from utils.display_handler import SearchPages, WatchedPages, KeywordPages
 
 class GeneralCommands(commands.Cog):
     def __init__(self, client):
@@ -28,8 +28,8 @@ class GeneralCommands(commands.Cog):
             page = 1
             if context.author.id in globals():
                 globals()[context.author.id].run = False
-            globals()[context.author.id] = DisplayHandler(self.client, context, options)
-            await globals()[context.author.id].arrow_pages(page)
+            globals()[context.author.id] = SearchPages(self.client, context, options, page)
+            await globals()[context.author.id].main()
 
     @commands.command(description="You can also edit your list here by typing the number in chat that you want to change.", brief="Used to show yours or others watched list. (eg ?watched @Riot212)", aliases=["Watched"])
     async def watched(self, context, *args):
@@ -47,8 +47,17 @@ class GeneralCommands(commands.Cog):
         page = 1
         if context.author.id in globals():
             globals()[context.author.id].run = False
-        globals()[context.author.id] = DisplayHandler(self.client, context, options)
-        await globals()[context.author.id].arrow_pages(page)
+        globals()[context.author.id] = WatchedPages(self.client, context, options, page)
+        await globals()[context.author.id].main()
+
+    @commands.command(description="", brief="", aliases=["Keywords"])
+    async def keywords(self, context, *keyword):
+        options = {"query": " ".join(keyword)}
+        page = 1
+        if context.author.id in globals():
+            globals()[context.author.id].run = False
+        globals()[context.author.id] = KeywordPages(self.client, context, options, page)
+        await globals()[context.author.id].main()
 
     #doesnt work now but i want to make it work later
     # @commands.command(description="", brief="", aliases=["Watch"])
