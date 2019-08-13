@@ -82,7 +82,7 @@ class _base():
         while self.run:
             embed, extra = self.api_call()
             embed = self.finish_embed(embed, extra, self.options["media"])
-            await self.send_message(embed)  
+            await self.send_message(embed)
             response = await self.wait_for_both(["◀", "▶"])
             if self.run:
                 await self.handle_response(response)
@@ -130,10 +130,10 @@ class _base():
     def create_list(self, media_type):
         message = ""
         for result in self.results:
-                if media_type is None:
-                    message += f'{self.results.index(result)+1} - {result.media_type.title()}: {getattr(result, globals()[result.media_type][0][0])}\n'
-                else:
-                    message += f'{self.results.index(result)+1} - {media_type.title()}: {getattr(result, globals()[media_type][0][0])}\n'
+            if media_type is None:
+                message += f'{self.results.index(result)+1} - {result.media_type.title()}: {getattr(result, globals()[result.media_type][0][0])}\n'
+            else:
+                message += f'{self.results.index(result)+1} - {media_type.title()}: {getattr(result, globals()[media_type][0][0])}\n'
         return message
 
     async def send_message(self, embed):
