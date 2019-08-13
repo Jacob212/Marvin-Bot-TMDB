@@ -68,12 +68,29 @@ class Search(_base):
     def tv(self, query, page=1):
         return self._get_obj(self._call('GET', f'{self._url}3/search/tv?api_key={self._api_key}&language=en-US&include_adult=true&query="{query}"&page={str(page)}'))
 
+    def keyword(self, query, page=1):
+        return self._get_obj(self._call('GET', f'{self._url}3/search/keyword?api_key={self._api_key}&query="{query}"&page={str(page)}'))
+
 class Details(_base):
     def movie(self, movie_id):
         return _AsObj(**self._call('GET', f'{self._url}3/movie/{movie_id}?api_key={self._api_key}&language=en-US'))
 
     def tv(self, tv_id):
         return _AsObj(**self._call('GET', f'{self._url}3/tv/{tv_id}?api_key={self._api_key}&language=en-US'))
+
+class Discover(_base):
+    def movie(self, page=1):
+        return self._get_obj(self._call('GET', f'{self._url}3/discover/movie?api_key={self._api_key}&language=en-US&page={str(page)}'))
+
+    def tv(self, page=1):
+        return self._get_obj(self._call('GET', f'{self._url}3/discover/tv?api_key={self._api_key}&language=en-US&page={str(page)}'))
+
+    # def multi(self, page=1): not a feature of the api
+    #     return self._get_obj(self._call('GET', f'{self._url}3/discover/multi?api_key={self._api_key}&language=en-US&page={str(page)}'))
+
+class Extra(_base):
+    def trending(self, media_type, time_window, page=1):
+        return self._get_obj(self._call('GET', f'{self._url}3/trending/{media_type}/{time_window}?api_key={self._api_key}&page={str(page)}'))
 
 class Auth(_base):
     def request(self):
