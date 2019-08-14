@@ -1,4 +1,4 @@
-from ..base import _base
+from ..base import _base, _AsObj
 
 class Lists(_base):
     def get(self, list_id, sort="title.asc", page=1):

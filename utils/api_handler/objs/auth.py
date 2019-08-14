@@ -23,4 +23,4 @@ class Auth(_base):
             'authorization': f'Bearer {self._read_access_token}',
             'content-type': 'application/json;charset=utf-8'
         }
-        return self._get_obj(self._call('DELETE', f'{self._url}4/auth/access_token', headers=headers, payload=payload), key=None)
+        return self._get_obj(self._call('DELETE', f'{self._url}4/auth/access_token', headers=headers, payload=payload), key=None
