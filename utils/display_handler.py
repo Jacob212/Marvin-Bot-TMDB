@@ -1,12 +1,15 @@
 import datetime
 import asyncio
 import discord
-from utils import api_handler
+from utils.api_handler import Search, Lists, Movies, TV
 from utils.sql import get_account_details
 
-SEARCH = api_handler.Search()
-LISTS = api_handler.Lists()
-DETAILS = api_handler.Details()
+__all__ = ['SearchPages', 'WatchedPages', 'KeywordPages', 'LatestMoviesPages']
+
+SEARCH = Search()
+LISTS = Lists()
+MOVIES = Movies()
+TV = TV()
 
 movie = (
     ("title", "overview", "imdb_id"),
@@ -83,33 +86,16 @@ class _base():
             embed, extra = self.api_call()
             embed = self.finish_embed(embed, extra, self.options["media"])
             await self.send_message(embed)
-            response = await self.wait_for_both(["◀", "▶"])
+            response = await self.get_response(["◀", "▶"])
             if self.run:
                 await self.handle_response(response)
 
-    # async def wait_for_message(self):
-    #     return self.client.wait_for("message", timeout=600, check=lambda m: m.channel == self.context.channel and m.content.isdigit() and m.author.id == self.context.message.author.id)
-
-    async def wait_for_reaction(self, reactions, message):
+    async def get_response(self, reactions):
         try:
-            return await self.client.wait_for("reaction_add", timeout=6, check=lambda r, u: r.emoji in reactions and u.id == self.context.message.author.id and r.message.id == message.id)
-        except asyncio.TimeoutError:
-            self.run = False
-            return None, None
-
-    async def wait_for_both(self, reactions):
-        try:
-            done, pending = await asyncio.wait([
-                self.client.wait_for("message", timeout=600, check=lambda m: m.channel == self.context.channel and m.content.isdigit() and m.author.id == self.context.message.author.id),
-                self.client.wait_for("reaction_add", timeout=600, check=lambda r, u: r.emoji in reactions and u.id == self.context.message.author.id and r.message.id == self.bots_message.id)
-                ], return_when=asyncio.FIRST_COMPLETED)
+            return await self.client.wait_for("reaction_add", timeout=6, check=lambda r, u: r.emoji in reactions and u.id == self.context.message.author.id and r.message.id == self.bots_message.id)
         except asyncio.TimeoutError:
             self.run = False
             return None
-        else:
-            for future in pending:
-                future.cancel()
-            return done.pop().result()
 
     async def add_reactions(self, reactions, message):
         for reaction in reactions:
@@ -144,6 +130,15 @@ class _base():
         await self.add_reactions(["◀", "▶"], self.bots_message)
 
     async def handle_response(self, response):
+        reaction = response[0]
+        if reaction.emoji == "▶" and len(self.results) == 20:
+            self.page += 1
+        elif reaction.emoji == "◀" and self.page != 1:
+            self.page -= 1
+        await self.remove_reactions(["◀", "▶"], self.bots_message, self.context.message.author)
+
+class _pageDetails(_base):
+    async def handle_response(self, response):
         if isinstance(response, tuple):
             reaction = response[0]
             if reaction.emoji == "▶" and len(self.results) == 20:
@@ -155,14 +150,34 @@ class _base():
             await response.delete()
             await self.details(int(response.content)-1)
 
-class _pageDetails(_base):
+    async def get_response(self, reactions):
+        try:
+            done, pending = await asyncio.wait([
+                self.client.wait_for("message", timeout=600, check=lambda m: m.channel == self.context.channel and m.content.isdigit() and m.author.id == self.context.message.author.id),
+                self.client.wait_for("reaction_add", timeout=600, check=lambda r, u: r.emoji in reactions and u.id == self.context.message.author.id and r.message.id == self.bots_message.id)
+                ], return_when=asyncio.FIRST_COMPLETED)
+        except asyncio.TimeoutError:
+            self.run = False
+            return None
+        else:
+            for future in pending:
+                future.cancel()
+            return done.pop().result()
+
+    async def wait_for_reaction(self, reactions, message):
+        try:
+            return await self.client.wait_for("reaction_add", timeout=6, check=lambda r, u: r.emoji in reactions and u.id == self.context.message.author.id and r.message.id == message.id)
+        except asyncio.TimeoutError:
+            self.run = False
+            return None, None
+
     async def details(self, index):
         if index <= len(self.results):
             if self.options["media"] == "movie" or self.results[index].media_type == "movie":
-                detail = DETAILS.movie(self.results[index].id)
+                detail = MOVIES.details(self.results[index].id)
                 embed = embed_format(detail, "movie", self.context.message.author.color.value)
             elif self.options["media"] == "tv" or self.results[index].media_type == "tv":
-                detail = DETAILS.tv(self.results[index].id)
+                detail = TV.details(self.results[index].id)
                 embed = embed_format(detail, "tv", self.context.message.author.color.value)
         else:
             embed = discord.Embed(title="That is not an option", description="Please go back", color=discord.Colour.dark_red())
@@ -265,20 +280,19 @@ class WatchedPages(_pageDetails):
         self.results, extra = LISTS.get(self.options["listID"], self.options["latest"], self.page)
         return embed, extra
 
+class LatestMoviesPages(_pageDetails):
+    def __init__(self, client, context, options, page):
+        super().__init__(client, context, options, page)
+        self.empty_message = "Nothing is being released soon"
+
+    def api_call(self):
+        embed = discord.Embed(title="")
+
 class KeywordPages(_base):
     def __init__(self, client, context, options, page):
         super().__init__(client, context, options, page)
         self.empty_message = "The keyword you are looking for doesnt exist."
         self.options["media"] = None
-
-    async def main(self):
-        while self.run:
-            embed, extra = self.api_call()
-            embed = self.finish_embed(embed, extra, None)
-            await self.send_message(embed)
-            response = await self.wait_for_reaction(["◀", "▶"], self.bots_message)
-            if self.run:
-                await self.handle_response(response)
 
     def api_call(self):
         embed = discord.Embed(title="Keywords related to:", description=self.options["query"])
@@ -290,11 +304,3 @@ class KeywordPages(_base):
         for result in self.results:
             message += f'{self.results.index(result)+1} - {result.name}\n'
         return message
-
-    async def handle_response(self, response):
-        reaction = response[0]
-        if reaction.emoji == "▶" and len(self.results) == 20:
-            self.page += 1
-        elif reaction.emoji == "◀" and self.page != 1:
-            self.page -= 1
-        await self.remove_reactions(["◀", "▶"], self.bots_message, self.context.message.author)

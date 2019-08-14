@@ -1,6 +1,6 @@
 import sqlite3
 
-__all__ = ['get_account_details', 'setup_account', 'update_access_token', 'update_list_id']
+__all__ = ['get_account_details', 'setup_account', 'update_account', 'update_access_token', 'update_list_id']
 
 CONN = sqlite3.connect("discord.db")
 C = CONN.cursor()
