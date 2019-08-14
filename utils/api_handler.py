@@ -58,26 +58,6 @@ class _AsObj:
     def __init__(self, **entries):
         self.__dict__.update(entries)
 
-class Search(_base):
-    def multi(self, query, page=1):
-        return self._get_obj(self._call('GET', f'{self._url}3/search/multi?api_key={self._api_key}&language=en-US&include_adult=true&query="{query}"&page={str(page)}'))
-
-    def movie(self, query, page=1):
-        return self._get_obj(self._call('GET', f'{self._url}3/search/movie?api_key={self._api_key}&language=en-US&include_adult=true&query="{query}"&page={str(page)}'))
-
-    def tv(self, query, page=1):
-        return self._get_obj(self._call('GET', f'{self._url}3/search/tv?api_key={self._api_key}&language=en-US&include_adult=true&query="{query}"&page={str(page)}'))
-
-    def keyword(self, query, page=1):
-        return self._get_obj(self._call('GET', f'{self._url}3/search/keyword?api_key={self._api_key}&query="{query}"&page={str(page)}'))
-
-class Details(_base):
-    def movie(self, movie_id):
-        return _AsObj(**self._call('GET', f'{self._url}3/movie/{movie_id}?api_key={self._api_key}&language=en-US'))
-
-    def tv(self, tv_id):
-        return _AsObj(**self._call('GET', f'{self._url}3/tv/{tv_id}?api_key={self._api_key}&language=en-US'))
-
 class Discover(_base):
     def movie(self, page=1):
         return self._get_obj(self._call('GET', f'{self._url}3/discover/movie?api_key={self._api_key}&language=en-US&page={str(page)}'))
@@ -88,9 +68,41 @@ class Discover(_base):
     # def multi(self, page=1): not a feature of the api
     #     return self._get_obj(self._call('GET', f'{self._url}3/discover/multi?api_key={self._api_key}&language=en-US&page={str(page)}'))
 
-class Extra(_base):
-    def trending(self, media_type, time_window, page=1):
-        return self._get_obj(self._call('GET', f'{self._url}3/trending/{media_type}/{time_window}?api_key={self._api_key}&page={str(page)}'))
+class Movies(_base):
+    def details(self, movie_id):
+        return self._get_obj(self._call('GET', f'{self._url}3/movie/{movie_id}?api_key={self._api_key}&language=en-US'))
+
+    def now_playing(self, page=1):
+        return self._get_obj(self._call('GET', f'{self._url}3/movie/now_playing?api_key={self._api_key}&language=en-US&page={str(page)}'))
+
+    def latest(self):
+        return self._get_obj(self._call('GET', f'{self._url}3/movie/latest?api_key={self._api_key}&language=en-US'))
+
+class Search(_base):
+    def keywords(self, query, page=1):
+        return self._get_obj(self._call('GET', f'{self._url}3/search/keyword?api_key={self._api_key}&query="{query}"&page={str(page)}'))
+
+    def movie(self, query, page=1):
+        return self._get_obj(self._call('GET', f'{self._url}3/search/movie?api_key={self._api_key}&language=en-US&include_adult=true&query="{query}"&page={str(page)}'))
+
+    def multi(self, query, page=1):
+        return self._get_obj(self._call('GET', f'{self._url}3/search/multi?api_key={self._api_key}&language=en-US&include_adult=true&query="{query}"&page={str(page)}'))
+
+    def people(self, query, page=1):
+        return self._get_obj(self._call('GET', f'{self._url}3/search/person?api_key={self._api_key}&language=en-US&include_adult=true&query="{query}"&page={str(page)}'))
+
+    def tv(self, query, page=1):
+        return self._get_obj(self._call('GET', f'{self._url}3/search/tv?api_key={self._api_key}&language=en-US&include_adult=true&query="{query}"&page={str(page)}'))
+
+class TV(_base):
+    def details(self, tv_id):
+        return _AsObj(**self._call('GET', f'{self._url}3/tv/{tv_id}?api_key={self._api_key}&language=en-US'))
+
+    def on_the_air(self, page=1):
+        return self._get_obj(self._call('GET', f'{self._url}3/movie/on_the_air?api_key={self._api_key}&language=en-US&page={str(page)}'))
+
+    def latest(self):
+        return self._get_obj(self._call('GET', f'{self._url}3/tv/latest?api_key={self._api_key}&language=en-US'))
 
 class Auth(_base):
     def request(self):
