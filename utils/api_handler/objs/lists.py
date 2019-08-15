@@ -1,4 +1,4 @@
-from ..base import _base, _AsObj
+from ..base import _base
 
 class Lists(_base):
     def get(self, list_id, sort="title.asc", page=1):
@@ -10,7 +10,7 @@ class Lists(_base):
             'authorization': "Bearer "+access_token,
             'content-type': "application/json;charset=utf-8"
             }
-        return _AsObj(**self._call('POST', f'{self._url}4/list', headers=headers, payload=payload), key=None)
+        return self._get_obj(self._call('POST', f'{self._url}4/list', headers=headers, payload=payload), key=None)
 
     def delete(self, list_id, access_token):
         headers = {
