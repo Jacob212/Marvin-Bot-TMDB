@@ -1,10 +1,10 @@
 import discord
 from discord.ext import commands
-from utils import api_handler
+from utils.api_handler import Auth, Lists
 from utils.sql import get_account_details, setup_account, update_access_token, update_list_id, update_account
 
-AUTH = api_handler.Auth()
-LISTS = api_handler.Lists()
+AUTH = Auth()
+LISTS = Lists()
 
 class ManagementCommands(commands.Cog):
     def __init__(self, client):
