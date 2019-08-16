@@ -1,11 +1,11 @@
 
-keywords.txt
-discord.db
-*.pyc
+data/
+htmlcov/
 Marvin-Bot-TMDB.sublime-workspace
 Marvin-Bot-TMDB.sublime-project
-.coverage
+discord.db
 coverage.xml
-htmlcov/
+.coverage
+*.pyc
 *.sqlite
 *.bat
