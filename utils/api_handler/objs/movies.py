@@ -46,7 +46,7 @@ class Movies(_base):
     def lists(self, movie_id, page=1):
         return self._get_obj(self._call('GET', f'{self._url}3/movie/{movie_id}/lists?api_key={self._api_key}&page={str(page)}'))
 
-    def rating(self, movie_id, session_id):
+    def rate(self, movie_id, session_id):
         return self._get_obj(self._call('POST', f'{self._url}3/movie/{movie_id}/rating?api_key={self._api_key}'), key=None)
 
     def rating(self, movie_id, session_id):

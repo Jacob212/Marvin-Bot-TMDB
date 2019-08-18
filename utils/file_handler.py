@@ -1,11 +1,11 @@
-from requests import get
-from datetime import datetime, timedelta
-from os import remove, mkdir, path, walk
-from gzip import open as gzopen
-import json
 import re
+from gzip import open as gzopen
+from os import remove, mkdir, path, walk
+from datetime import datetime, timedelta
+from requests import get
+import json
 
-_exports = ["movie_ids", "tv_series_ids", "person_ids", "collection_ids", "tv_network_ids", "keyword_ids", "production_company_ids"]
+_EXPORTS = ["movie_ids", "tv_series_ids", "person_ids", "collection_ids", "tv_network_ids", "keyword_ids", "production_company_ids"]
 
 def _set_time():
     date = datetime.utcnow()
@@ -31,7 +31,7 @@ def download(location):
     _make_dir(location)
     date = _set_time()
     if date is not None:
-        for export in _exports:
+        for export in _EXPORTS:
             response = get(f'http://files.tmdb.org/p/exports/{export}_{date.strftime("%m")}_{date.strftime("%d")}_{date.year}.json.gz', stream=True)
             with open(f'./{location}/{export}.json.gz', "wb") as f:
                 for chunk in response.iter_content(1024):
@@ -46,7 +46,7 @@ def download(location):
                     f.write(line)
 
 def find_exact(location, file, find):
-    key  = "name"
+    key = "name"
     if file == "movie_ids":
         key = "original_title"
     elif file == "tv_series_ids":
@@ -55,10 +55,11 @@ def find_exact(location, file, find):
         for rownum, line in enumerate(f):
             if find.lower() == json.loads(line)[key]:
                 return json.loads(line)
+    return None
 
 def find_all(location, file, find):
     found = []
-    key  = "name"
+    key = "name"
     if file == "movie_ids":
         key = "original_title"
     elif file == "tv_series_ids":
