@@ -1,7 +1,7 @@
 import datetime
 import asyncio
 import discord
-from utils.api_handler import Search, Lists, Movies, TV
+from utils.api_handler import Search, Lists, Movies, TV, Discover
 from utils.sql import get_account_details
 
 __all__ = ['SearchPages', 'WatchedPages', 'KeywordPages', 'LatestMoviesPages']
@@ -10,6 +10,7 @@ SEARCH = Search()
 LISTS = Lists()
 MOVIES = Movies()
 TV = TV()
+DISCOVER = Discover()
 
 movie = (
     ("title", "overview", "imdb_id"),
@@ -280,6 +281,26 @@ class WatchedPages(_pageDetails):
         self.results, extra = LISTS.get(self.options["listID"], self.options["latest"], self.page)
         return embed, extra
 
+class DiscoverMoviesPages(_pageDetails):
+    def __init__(self, client, context, options, page):
+        super().__init__(client, context, options, page)
+        self.empty_message = "Nothing is being released soon"
+
+    def api_call(self):
+        embed = discord.Embed(title="Movies filtered by:", description=self.options["query"])
+        self.results, extra = DISCOVER.movie(self.options["query"], self.page)
+        return embed, extra
+
+class DiscoverTVPages(_pageDetails):
+    def __init__(self, client, context, options, page):
+        super().__init__(client, context, options, page)
+        self.empty_message = "Nothing is being released soon"
+
+    def api_call(self):
+        embed = discord.Embed(title="TV shows filtered by:", description=self.options["query"])
+        self.results, extra = DISCOVER.tv(self.options["query"], self.page)
+        return embed, extra
+
 class LatestMoviesPages(_pageDetails):
     def __init__(self, client, context, options, page):
         super().__init__(client, context, options, page)
@@ -296,7 +317,7 @@ class KeywordPages(_base):
 
     def api_call(self):
         embed = discord.Embed(title="Keywords related to:", description=self.options["query"])
-        self.results, extra = SEARCH.keyword(self.options["query"], self.page)
+        self.results, extra = SEARCH.keywords(self.options["query"], self.page)
         return embed, extra
 
     def create_list(self, media_type):

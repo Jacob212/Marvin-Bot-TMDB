@@ -3,11 +3,13 @@ import re
 import discord
 from discord.ext import commands
 from utils.sql import get_account_details
-from utils.display_handler import SearchPages, WatchedPages, KeywordPages
+from utils.display_handler import SearchPages, WatchedPages, KeywordPages, DiscoverMoviesPages, DiscoverTVPages
+from utils.file_handler import download, find_exact
 
 class GeneralCommands(commands.Cog):
     def __init__(self, client):
         self.client = client
+        download("data")
 
     @commands.command(description="Use -movies or -shows to filter to only one. You can select an item by typing its number in chat.", brief="Used to search for movies and tv shows.", aliases=["Search"])
     async def search(self, context, *args):
@@ -59,17 +61,37 @@ class GeneralCommands(commands.Cog):
         globals()[context.author.id] = KeywordPages(self.client, context, options, page)
         await globals()[context.author.id].main()
 
-    #doesnt work now but i want to make it work later
-    # @commands.command(description="", brief="", aliases=["Watch"])
-    # async def watch(self, context, arg=None):
-    #     await context.message.delete()
-    #     if arg is None:
-    #         await context.send("You have to enter an option to use this command")
-    #     elif arg.isdigit() and context.message.author in globals():
-    #         await globals()[context.message.author].add_watchlist(int(arg)-1)
-    #     else:
-    #         await context.send("That is not a valid option")
+    @commands.command(description="", brief="", aliases=[])
+    async def discover(self, context, *args):
+        stuff = {}
+        page = 1
+        matches = re.finditer(r"[\+-][a-zA-z ]+(\+|-){0}", " ".join(args), re.IGNORECASE)
+        for matchNum, match in enumerate(matches, start=1):
+            matchString = match.group()
+            result = find_exact("data", "keyword_ids", matchString.strip().strip("+-"))
+            if result is None:
+                continue
+            if "+" in matchString:
+                if "with_genres" in stuff:
+                    stuff["with_genres"] = f'{stuff["with_genres"]},{result["id"]}'
+                else:
+                    stuff["with_genres"] = result["id"]
+            elif "-" in matchString:
+                if "without_genres" in stuff:
+                    stuff["without_genres"] = f'{stuff["without_genres"]},{result["id"]}'
+                else:
+                    stuff["without_genres"] = result["id"]
+        if stuff != {}:
+            options = {
+                "media":"movie",
+                "query":stuff
+                }
+            if context.author.id in globals():
+                globals()[context.author.id].run = False
+            globals()[context.author.id] = DiscoverMoviesPages(self.client, context, options, page)
+            await globals()[context.author.id].main()
 
+    #doesnt work now but i want to make it work later
     # @commands.command()
     # async def discover_movie(self, context, *args):
     #     arg = " ".join(args)
