@@ -284,22 +284,34 @@ class WatchedPages(_pageDetails):
 class DiscoverMoviesPages(_pageDetails):
     def __init__(self, client, context, options, page):
         super().__init__(client, context, options, page)
-        self.empty_message = "Nothing is being released soon"
+        self.empty_message = "Nothing could be found with these filters"
 
     def api_call(self):
-        embed = discord.Embed(title="Movies filtered by:", description=self.options["query"])
+        embed = discord.Embed(title="Movies filtered by:", description=self.description())
         self.results, extra = DISCOVER.movie(self.options["query"], self.page)
         return embed, extra
+
+    def description(self):
+        string = ""
+        for value, key in self.options["description_string"]:
+            string += f'{value}: {", ".join(key)}\n'
+        return string
 
 class DiscoverTVPages(_pageDetails):
     def __init__(self, client, context, options, page):
         super().__init__(client, context, options, page)
-        self.empty_message = "Nothing is being released soon"
+        self.empty_message = "Nothing could be found with these filters"
 
     def api_call(self):
-        embed = discord.Embed(title="TV shows filtered by:", description=self.options["query"])
+        embed = discord.Embed(title="TV shows filtered by:", description=self.description())
         self.results, extra = DISCOVER.tv(self.options["query"], self.page)
         return embed, extra
+
+    def description(self):
+        string = ""
+        for value, key in self.options["description_string"].items():
+            string += f'{value}: {", ".join(key)}\n'
+        return string
 
 class LatestMoviesPages(_pageDetails):
     def __init__(self, client, context, options, page):
