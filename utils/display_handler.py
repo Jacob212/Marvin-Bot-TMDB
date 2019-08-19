@@ -5,8 +5,6 @@ from utils.api_handler import Search, Lists, Movies, TV, Discover
 from utils.sql import get_account_details
 from utils.file_handler import find_exact
 
-__all__ = ['SearchPages', 'WatchedPages', 'KeywordPages', 'LatestMoviesPages']
-
 SEARCH = Search()
 LISTS = Lists()
 MOVIES = Movies()
