@@ -187,7 +187,7 @@ class _details(_base):
         await self.bots_message.remove_reaction("▶", self.client.user)
         await self._add_reactions(["⏬", "❌"], self.bots_message)
         while self.run:
-            reaction, user = await self._wait_for_reaction(["◀", "⏬", "❌"], self.bots_message)
+            reaction, _ = await self._wait_for_reaction(["◀", "⏬", "❌"], self.bots_message)
             if not self.run:
                 break
             if reaction.emoji == "◀":
@@ -223,7 +223,7 @@ class _details(_base):
                 await temp_message.edit(embed=embed)
             await self._add_reactions(["✅", "❌"], temp_message)
             while self.run:
-                reaction, user = await self._wait_for_reaction(["✅", "❌"], temp_message)
+                reaction, _ = await self._wait_for_reaction(["✅", "❌"], temp_message)
                 if not self.run:
                     break
                 if reaction.emoji == "✅":
@@ -245,7 +245,7 @@ class _details(_base):
                 temp_message = await self.context.send(embed=embed)
             await self._add_reactions(["✅", "❌"], temp_message)
             while self.run:
-                reaction, user = await self._wait_for_reaction(["✅", "❌"], temp_message)
+                reaction, _ = await self._wait_for_reaction(["✅", "❌"], temp_message)
                 if not self.run:
                     break
                 if reaction.emoji == "✅":
@@ -294,7 +294,7 @@ class _discover(_details):
         await self.main()
 
     def _sort_matches(self, matches):
-        for matchNum, match in enumerate(matches, start=1):
+        for _, match in enumerate(matches, start=1):
             match_string = match.group().lower()
             result = find_exact("data", "movie_genre_ids", match_string.strip().strip("+-"))
             if result is not None:
@@ -335,13 +335,13 @@ class DiscoverTVPages(_discover):
         self.results, extra = DISCOVER.tv(self.query_string, self.page)
         return embed, extra
 
-class LatestMoviesPages(_details):
-    def __init__(self, client, context, options, page):
-        super().__init__(client, context, options, page)
-        self.empty_message = "Nothing is being released soon"
+# class LatestMoviesPages(_details):
+#     def __init__(self, client, context, options, page):
+#         super().__init__(client, context, options, page)
+#         self.empty_message = "Nothing is being released soon"
 
-    def _api_call(self):
-        embed = discord.Embed(title="")
+#     def _api_call(self):
+#         embed = discord.Embed(title="")
 
 class KeywordPages(_base):
     def __init__(self, client, context, options, page):

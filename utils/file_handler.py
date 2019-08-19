@@ -22,7 +22,7 @@ def _make_dir(location):
 def get_file_names(location):
     if path.isdir(f'./{location}'):
         files = []
-        for r, d, f in walk(f'./{location}'):
+        for _, _, f in walk(f'./{location}'):
             for file in f:
                 if '.json' in file:
                     files.append(file[:-5])
@@ -66,7 +66,7 @@ def find_exact(location, file, find):
     elif file == "tv_series_ids":
         key = "original_name"
     with open(f'./{location}/{file}.json', mode="r", encoding="utf-8") as f:
-        for rownum, line in enumerate(f):
+        for _, line in enumerate(f):
             if find.lower() == json.loads(line)[key]:
                 return json.loads(line)
     return None
@@ -79,7 +79,7 @@ def find_all(location, file, find):
     elif file == "tv_series_ids":
         key = "original_name"
     with open(f'./{location}/{file}.json', mode="r", encoding="utf-8") as f:
-        for rownum, line in enumerate(f):
+        for _, line in enumerate(f):
             if re.search(rf'\b{find}', json.loads(line)[key], re.IGNORECASE) is not None:
                 found.append(json.loads(line))
     return found
