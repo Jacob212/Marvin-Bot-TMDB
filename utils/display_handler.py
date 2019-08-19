@@ -293,8 +293,8 @@ class DiscoverMoviesPages(_pageDetails):
 
     def description(self):
         string = ""
-        for value, key in self.options["description_string"]:
-            string += f'{value}: {", ".join(key)}\n'
+        for value, key in self.options["description_string"].items():
+            string += f'{value}: {", ".join(key).lower()}\n'
         return string
 
 class DiscoverTVPages(_pageDetails):
@@ -310,7 +310,7 @@ class DiscoverTVPages(_pageDetails):
     def description(self):
         string = ""
         for value, key in self.options["description_string"].items():
-            string += f'{value}: {", ".join(key)}\n'
+            string += f'{value}: {", ".join(key).lower()}\n'
         return string
 
 class LatestMoviesPages(_pageDetails):
