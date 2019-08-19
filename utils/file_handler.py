@@ -53,11 +53,11 @@ def make_genre_ids_file(location):
     result = _GENRES.movie()
     with open(f'./{location}/movie_genre_ids.json', "w", encoding="utf-8") as f:
         for genre in result.genres:
-            f.write(str(genre).replace("'",'"').lower()+"\n")
+            f.write(str(genre).replace("'", '"').lower()+"\n")
     result = _GENRES.tv()
     with open(f'./{location}/tv_genre_ids.json', "w", encoding="utf-8") as f:
         for genre in result.genres:
-            f.write(str(genre).replace("'",'"').lower()+"\n")
+            f.write(str(genre).replace("'", '"').lower()+"\n")
 
 def find_exact(location, file, find):
     key = "name"

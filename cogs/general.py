@@ -4,7 +4,7 @@ import discord
 from discord.ext import commands
 from utils.sql import get_account_details
 from utils.display_handler import SearchPages, WatchedPages, KeywordPages, DiscoverMoviesPages, DiscoverTVPages
-from utils.file_handler import download, make_genre_ids_file, find_exact
+from utils.file_handler import download, make_genre_ids_file
 
 class GeneralCommands(commands.Cog):
     def __init__(self, client):
@@ -67,7 +67,7 @@ class GeneralCommands(commands.Cog):
         page = 1
         matches = re.finditer(r"[\+-][a-zA-z ]+(\+|-){0}", " ".join(args), re.IGNORECASE)
         options = {
-            "media": "movie", 
+            "media": "movie",
             "matches": matches
             }
         if context.author.id in globals():
