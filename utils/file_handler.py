@@ -1,11 +1,13 @@
 import re
+import json
 from gzip import open as gzopen
 from os import remove, mkdir, path, walk
 from datetime import datetime, timedelta
 from requests import get
-import json
+from utils.api_handler import Genres
 
-_EXPORTS = ["movie_ids", "tv_series_ids", "person_ids", "collection_ids", "tv_network_ids", "keyword_ids", "production_company_ids"]
+_EXPORTS = ["movie_ids", "tv_series_ids", "person_ids", "collection_ids", "tv_network_ids", "keyword_ids", "production_company_ids", "movie_genre_ids", "tv_genre_ids"]
+_GENRES = Genres()
 
 def _set_time():
     date = datetime.utcnow()
@@ -33,6 +35,7 @@ def download(location):
     if date is not None:
         for export in _EXPORTS:
             response = get(f'http://files.tmdb.org/p/exports/{export}_{date.strftime("%m")}_{date.strftime("%d")}_{date.year}.json.gz', stream=True)
+            print(response)
             with open(f'./{location}/{export}.json.gz', "wb") as f:
                 for chunk in response.iter_content(1024):
                     if chunk:
@@ -44,6 +47,17 @@ def download(location):
             with open(f'./{location}/{export}.json', "w", encoding="utf-8") as f:
                 for line in basic:
                     f.write(line)
+
+def make_genre_ids_file(location):
+    _make_dir(location)
+    result = _GENRES.movie()
+    with open(f'./{location}/movie_genre_ids.json', "w", encoding="utf-8") as f:
+        for genre in result.genres:
+            f.write(str(genre).replace("'",'"').lower()+"\n")
+    result = _GENRES.tv()
+    with open(f'./{location}/tv_genre_ids.json', "w", encoding="utf-8") as f:
+        for genre in result.genres:
+            f.write(str(genre).replace("'",'"').lower()+"\n")
 
 def find_exact(location, file, find):
     key = "name"
