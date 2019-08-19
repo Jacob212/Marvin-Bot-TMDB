@@ -62,99 +62,31 @@ class GeneralCommands(commands.Cog):
         globals()[context.author.id] = KeywordPages(self.client, context, options, page)
         await globals()[context.author.id].main()
 
-    @commands.command(description="You can filter movies by entering genres with + or - (include, exclude) before the genre. e.g ?movies +action -adventure.", brief="Used to filter movies based on genres. Do ?help movies for more info.", aliases=["Movies"])
+    @commands.command(description="You can filter movies by entering genres and keywords with + or - (include, exclude) before the genre or keyword. e.g ?movies +action -adventure.", brief="Used to filter movies based on genres. Do ?help movies for more info.", aliases=["Movies"])
     async def movies(self, context, *args):
-        query_string = {}
-        description_string = {"include":[], "exclude":[]}
         page = 1
         matches = re.finditer(r"[\+-][a-zA-z ]+(\+|-){0}", " ".join(args), re.IGNORECASE)
-        for matchNum, match in enumerate(matches, start=1):
-            matchString = match.group().lower()
-            result = find_exact("data", "movie_genre_ids", matchString.strip().strip("+-"))
-            if result is not None:
-                if "+" in matchString:
-                    if "with_genres" in query_string:
-                        query_string["with_genres"] = f'{query_string["with_genres"]},{result["id"]}'
-                    else:
-                        query_string["with_genres"] = result["id"]
-                    description_string["include"].append(result["name"])
-                elif "-" in matchString:
-                    if "without_genres" in query_string:
-                        query_string["without_genres"] = f'{query_string["without_genres"]},{result["id"]}'
-                    else:
-                        query_string["without_genres"] = result["id"]
-                    description_string["exclude"].append(result["name"])
-            else:
-                result = find_exact("data", "keyword_ids", matchString.strip().strip("+-"))
-                if "+" in matchString:
-                    if "with_keywords" in query_string:
-                        query_string["with_keywords"] = f'{query_string["with_keywords"]},{result["id"]}'
-                    else:
-                        query_string["with_keywords"] = result["id"]
-                    description_string["include"].append(result["name"])
-                elif "-" in matchString:
-                    if "without_keywords" in query_string:
-                        query_string["without_keywords"] = f'{query_string["without_keywords"]},{result["id"]}'
-                    else:
-                        query_string["without_keywords"] = result["id"]
-                    description_string["exclude"].append(result["name"])
-        if query_string != {}:
-            options = {
-                "media":"movie",
-                "query":query_string,
-                "description_string":description_string
-                }
-            if context.author.id in globals():
-                globals()[context.author.id].run = False
-            globals()[context.author.id] = DiscoverMoviesPages(self.client, context, options, page)
-            await globals()[context.author.id].main()
+        options = {
+            "media": "movie", 
+            "matches": matches
+            }
+        if context.author.id in globals():
+            globals()[context.author.id].run = False
+        globals()[context.author.id] = DiscoverMoviesPages(self.client, context, options, page)
+        await globals()[context.author.id].before_main()
 
-    @commands.command(description="You can filter tv shows by entering genres with + or - (include, exclude) before the genre. e.g ?shows +action -adventure.", brief="Used to filter tv shows based on genres. Do ?help shows for more info.", aliases=["Shows"])
+    @commands.command(description="You can filter tv shows by entering genres and keywords with + or - (include, exclude) before the genre or keyword. e.g ?shows +action -adventure.", brief="Used to filter tv shows based on genres. Do ?help shows for more info.", aliases=["Shows"])
     async def shows(self, context, *args):
-        query_string = {}
-        description_string = {"include":[], "exclude":[]}
         page = 1
         matches = re.finditer(r"[\+-][a-zA-z &]+(\+|-){0}", " ".join(args), re.IGNORECASE)
-        for matchNum, match in enumerate(matches, start=1):
-            matchString = match.group().lower()
-            result = find_exact("data", "tv_genre_ids", matchString.strip().strip("+-"))
-            if result is not None:
-                if "+" in matchString:
-                    if "with_genres" in query_string:
-                        query_string["with_genres"] = f'{query_string["with_genres"]},{result["id"]}'
-                    else:
-                        query_string["with_genres"] = result["id"]
-                    description_string["include"].append(result["name"])
-                elif "-" in matchString:
-                    if "without_genres" in query_string:
-                        query_string["without_genres"] = f'{query_string["without_genres"]},{result["id"]}'
-                    else:
-                        query_string["without_genres"] = result["id"]
-                    description_string["exclude"].append(result["name"])
-            else:
-                result = find_exact("data", "keyword_ids", matchString.strip().strip("+-"))
-                if "+" in matchString:
-                    if "with_keywords" in query_string:
-                        query_string["with_keywords"] = f'{query_string["with_keywords"]},{result["id"]}'
-                    else:
-                        query_string["with_keywords"] = result["id"]
-                    description_string["include"].append(result["name"])
-                elif "-" in matchString:
-                    if "without_keywords" in query_string:
-                        query_string["without_keywords"] = f'{query_string["without_keywords"]},{result["id"]}'
-                    else:
-                        query_string["without_keywords"] = result["id"]
-                    description_string["exclude"].append(result["name"])
-        if query_string != {}:
-            options = {
-                "media":"tv",
-                "query":query_string,
-                "description_string":description_string
-                }
-            if context.author.id in globals():
-                globals()[context.author.id].run = False
-            globals()[context.author.id] = DiscoverTVPages(self.client, context, options, page)
-            await globals()[context.author.id].main()
+        options = {
+            "media": "tv",
+            "matches": matches
+            }
+        if context.author.id in globals():
+            globals()[context.author.id].run = False
+        globals()[context.author.id] = DiscoverTVPages(self.client, context, options, page)
+        await globals()[context.author.id].before_main()
 
 def setup(client):
     client.add_cog(GeneralCommands(client))
