@@ -24,7 +24,7 @@ jobs:
     - name: Test with custom tests
       run: |
         python tests/test.py
-      env: |
+      env:
         TMDB_API_KEY: ${{ secrets.TMDB_API_KEY }}
         TMDB_READ_ACCESS_TOKEN: ${{ secrets.TMDB_READ_ACCESS_TOKEN }}
         DISCORD_BOT_TOKEN: ${{ secrets.DISCORD_BOT_TOKEN }}
