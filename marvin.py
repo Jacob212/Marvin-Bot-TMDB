@@ -30,7 +30,7 @@ async def auto_purge():#Clears the requests cache of expired responses every hou
         await asyncio.sleep(3600)
 
 #list of all cogs that should be loaded on startup
-INITIAL_EXTENSIONS = ['cogs.owner', 'cogs.general', 'cogs.management', 'cogs.error_handling']
+INITIAL_EXTENSIONS = ['cogs.owner', 'cogs.general', 'cogs.management', 'cogs.error_handling']#
 
 #creates instance of the bot
 client = commands.Bot(command_prefix=get_prefix, description='My Bot')
@@ -41,7 +41,7 @@ if __name__ == '__main__':
         client.load_extension(extension)
 
 #allows my testing bot in the tests directory to control this bot when running in travis ci
-if os.environ.get("respond_to_bots") == "True":
+if os.environ.get("RESPOND_TO_BOTS") == "True":
     @client.event
     async def on_message(message):
         ctx = await client.get_context(message)
