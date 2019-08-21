@@ -8,7 +8,7 @@ def thread_function(command):
     os.system(command)
 
 if __name__ == "__main__":
-    tested_bot_thread = threading.Thread(target=thread_function, args=("cd .. & coverage run marvin.py",))
+    tested_bot_thread = threading.Thread(target=thread_function, args=("cd .. & run marvin.py",))
     tested_bot_thread.start()
 
 #creates instance of the bot
