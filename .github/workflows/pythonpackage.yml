@@ -1,0 +1,33 @@
+name: Python package
+
+on: [push]
+
+jobs:
+  build:
+
+    runs-on: ubuntu-latest
+    strategy:
+      max-parallel: 4
+      matrix:
+        python-version: [3.6]
+
+    steps:
+    - uses: actions/checkout@v1
+    - name: Set up Python ${{ matrix.python-version }}
+      uses: actions/setup-python@v1
+      with:
+        python-version: ${{ matrix.python-version }}
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install -r requirements.txt
+    - name: Test with custom tests
+      run: |
+        python tests/test.py
+      env: |
+        DISCORD_BOT_TOKEN: ${{ secrets.DISCORD_BOT_TOKEN }}
+        DISCORD_TESTING_BOT_TOKEN: ${{ secrets.DISCORD_TESTING_BOT_TOKEN }}
+        RESPOND_TO_BOTS: ${{ secrets.RESPOND_TO_BOTS }}
+        TMDB_API_KEY: ${{ secrets.TMDB_API_KEY }}
+        TMDB_READ_ACCESS_TOKEN: ${{ secrets.TMDB_READ_ACCESS_TOKEN }}
+        
