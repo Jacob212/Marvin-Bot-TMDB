@@ -89,6 +89,7 @@ class _base():
             response = await self._get_response(["◀", "▶"])
             if self.run:
                 await self._handle_response(response)
+        print("finished")
 
     async def _get_response(self, reactions):
         try:
@@ -198,19 +199,19 @@ class _details(_base):
                 break
             elif reaction.emoji == "⏬":
                 await self.bots_message.remove_reaction("⏬", self.context.message.author)
-                await self._add_watchlist(index)
+                await self._add_watchlist(index, media)
             elif reaction.emoji == "❌":
                 await self.bots_message.remove_reaction("❌", self.context.message.author)
-                await self._remove_watchlist(index)
+                await self._remove_watchlist(index, media)
 
-    async def _add_watchlist(self, index):
+    async def _add_watchlist(self, index, media):
         if index <= len(self.results):
-            if self.results[index].media_type == "movie":
+            if media == "movie":
                 season = ""
                 episode = ""
                 embed = discord.Embed(title=f'Are you sure you want to add {self.results[index].title} to your watched list?')
                 temp_message = await self.context.send(embed=embed)
-            elif self.results[index].media_type == "tv":
+            elif media == "tv":
                 embed = discord.Embed(title=f'What season of {self.results[index].name} have you watched up too?')
                 temp_message = await self.context.send(embed=embed)
                 response = await self.client.wait_for('message', check=lambda m: m.channel == self.context.channel and m.content.isdigit())
@@ -230,19 +231,19 @@ class _details(_base):
                     break
                 if reaction.emoji == "✅":
                     account_details = get_account_details(self.context.author.id)
-                    payload = "{\"items\":[{\"media_type\":\""+self.results[index].media_type+"\",\"media_id\":"+str(self.results[index].id)+",\"comment\": \"S:"+season+" E:"+episode+"\"}]}"
+                    payload = "{\"items\":[{\"media_type\":\""+media+"\",\"media_id\":"+str(self.results[index].id)+",\"comment\": \"S:"+season+" E:"+episode+"\"}]}"
                     LISTS.add_items(account_details[2], account_details[0], payload)
-                    if self.results[index].media_type == "tv":
+                    if media == "tv":
                         LISTS.update_items(account_details[2], account_details[0], payload)
                 await temp_message.delete()
                 break
 
-    async def _remove_watchlist(self, index):
+    async def _remove_watchlist(self, index, media):
         if index <= len(self.results):
-            if self.results[index].media_type == "movie":
+            if media == "movie":
                 embed = discord.Embed(title=f'Are you sure you want to remove {self.results[index].title} from your watched list?')
                 temp_message = await self.context.send(embed=embed)
-            elif self.results[index].media_type == "tv":
+            elif media == "tv":
                 embed = discord.Embed(title=f'Are you sure you want to remove {self.results[index].name} from your watched list?')
                 temp_message = await self.context.send(embed=embed)
             await self._add_reactions(["✅", "❌"], temp_message)
@@ -252,7 +253,7 @@ class _details(_base):
                     break
                 if reaction.emoji == "✅":
                     account_details = get_account_details(self.context.author.id)
-                    payload = "{\"items\":[{\"media_type\":\""+self.results[index].media_type+"\",\"media_id\":"+str(self.results[index].id)+"}]}"
+                    payload = "{\"items\":[{\"media_type\":\""+media+"\",\"media_id\":"+str(self.results[index].id)+"}]}"
                     LISTS.remove_items(account_details[2], account_details[0], payload)
                 await temp_message.delete()
                 break
