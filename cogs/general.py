@@ -65,7 +65,7 @@ class GeneralCommands(commands.Cog):
     @commands.command(description="You can filter movies by entering genres and keywords with + or - (include, exclude) before the genre or keyword. e.g ?movies +action -adventure.", brief="Used to filter movies based on genres. Do ?help movies for more info.", aliases=["Movies"])
     async def movies(self, context, *args):
         page = 1
-        matches = re.finditer(r"[\+-][a-zA-z ]+(\+|-){0}", " ".join(args), re.IGNORECASE)
+        matches = re.finditer(r"[\+-][a-zA-z ]+", " ".join(args), re.IGNORECASE)
         options = {
             "media": "movie",
             "matches": matches
@@ -78,7 +78,7 @@ class GeneralCommands(commands.Cog):
     @commands.command(description="You can filter tv shows by entering genres and keywords with + or - (include, exclude) before the genre or keyword. e.g ?shows +action -adventure.", brief="Used to filter tv shows based on genres. Do ?help shows for more info.", aliases=["Shows"])
     async def shows(self, context, *args):
         page = 1
-        matches = re.finditer(r"[\+-][a-zA-z &]+(\+|-){0}", " ".join(args), re.IGNORECASE)
+        matches = re.finditer(r"[\+-][a-zA-z &]+", " ".join(args), re.IGNORECASE)
         options = {
             "media": "tv",
             "matches": matches
