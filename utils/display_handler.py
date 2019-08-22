@@ -173,10 +173,14 @@ class _details(_base):
 
     async def _details(self, index):
         if index <= len(self.results):
-            if self.options["media"] == "movie" or self.results[index].media_type == "movie":
+            try:
+                media = self.results[index].media_type
+            except AttributeError:
+                media = self.options["media"]
+            if media == "movie":
                 detail = MOVIES.details(self.results[index].id)
                 embed = _embed_format(detail, "movie", self.context.message.author.color.value)
-            elif self.options["media"] == "tv" or self.results[index].media_type == "tv":
+            elif media == "tv":
                 detail = TV.details(self.results[index].id)
                 embed = _embed_format(detail, "tv", self.context.message.author.color.value)
         else:
@@ -289,17 +293,23 @@ class _discover(_details):
 
     async def before_main(self):
         self._sort_matches(self.options["matches"])
+        self._year(self.options["year"])
         await self.main()
+
+    def _year(self, year):
+        if year is not None:
+            self.query_string["primary_release_year"] = year.group().strip("-")
 
     def _sort_matches(self, matches):
         for _, match in enumerate(matches, start=1):
             match_string = match.group().lower()
-            result = find_exact("data", "movie_genre_ids", match_string.strip().strip("+-"))
+            result = find_exact("data", f'{self.options["media"]}_genre_ids', match_string.strip().strip("+-"))
             if result is not None:
                 self._query_string_setup("genres", match_string, result)
             else:
                 result = find_exact("data", "keyword_ids", match_string.strip().strip("+-"))
-                self._query_string_setup("keywords", match_string, result)
+                if result is not None:
+                    self._query_string_setup("keywords", match_string, result)
 
     def _query_string_setup(self, query_type, match_string, result):
         if "+" in match_string:

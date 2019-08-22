@@ -65,10 +65,12 @@ class GeneralCommands(commands.Cog):
     @commands.command(description="You can filter movies by entering genres and keywords with + or - (include, exclude) before the genre or keyword. e.g ?movies +action -adventure.", brief="Used to filter movies based on genres. Do ?help movies for more info.", aliases=["Movies"])
     async def movies(self, context, *args):
         page = 1
-        matches = re.finditer(r"[\+-][a-zA-z ]+", " ".join(args), re.IGNORECASE)
+        genre_matches = re.finditer(r"[\+-][a-zA-z &]+", " ".join(args), re.IGNORECASE)
+        year_matches = re.search(r"-{2}\d{4}", " ".join(args))
         options = {
             "media": "movie",
-            "matches": matches
+            "matches": genre_matches,
+            "year": year_matches
             }
         if context.author.id in globals():
             globals()[context.author.id].run = False
@@ -78,10 +80,12 @@ class GeneralCommands(commands.Cog):
     @commands.command(description="You can filter tv shows by entering genres and keywords with + or - (include, exclude) before the genre or keyword. e.g ?shows +action -adventure.", brief="Used to filter tv shows based on genres. Do ?help shows for more info.", aliases=["Shows"])
     async def shows(self, context, *args):
         page = 1
-        matches = re.finditer(r"[\+-][a-zA-z &]+", " ".join(args), re.IGNORECASE)
+        genre_matches = re.finditer(r"[\+-][a-zA-z &]+", " ".join(args), re.IGNORECASE)
+        year_matches = re.search(r"-{2}\d{4}", " ".join(args))
         options = {
             "media": "tv",
-            "matches": matches
+            "matches": genre_matches,
+            "year": year_matches
             }
         if context.author.id in globals():
             globals()[context.author.id].run = False
