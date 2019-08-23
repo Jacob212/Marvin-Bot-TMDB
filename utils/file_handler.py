@@ -6,7 +6,7 @@ from datetime import datetime, timedelta
 from requests import get
 from utils.api_handler import Genres
 
-_EXPORTS = ["movie_ids", "tv_series_ids", "person_ids", "collection_ids", "tv_network_ids", "keyword_ids", "production_company_ids", "movie_genre_ids", "tv_genre_ids"]
+_EXPORTS = ["movie_ids", "tv_series_ids", "person_ids", "collection_ids", "tv_network_ids", "keyword_ids", "production_company_ids"]
 _GENRES = Genres()
 
 def _set_time():
@@ -35,12 +35,10 @@ def download(location):
     if date is not None:
         for export in _EXPORTS:
             response = get(f'http://files.tmdb.org/p/exports/{export}_{date.strftime("%m")}_{date.strftime("%d")}_{date.year}.json.gz', stream=True)
-            print(response)
             with open(f'./{location}/{export}.json.gz', "wb") as f:
                 for chunk in response.iter_content(1024):
                     if chunk:
                         f.write(chunk)
-
             with gzopen(f'./{location}/{export}.json.gz', mode="rt", encoding="utf-8") as file:
                 basic = file.readlines()
             remove(f'./{location}/{export}.json.gz')
