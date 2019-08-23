@@ -4,13 +4,10 @@ import discord
 from discord.ext import commands
 from utils.sql import get_account_details
 from utils.display_handler import SearchPages, WatchedPages, KeywordPages, DiscoverMoviesPages, DiscoverTVPages
-from utils.file_handler import download, make_genre_ids_file
 
 class GeneralCommands(commands.Cog):
     def __init__(self, client):
         self.client = client
-        #download("data")
-        make_genre_ids_file("data")
 
     @commands.command(description="Use -movies or -shows to filter to only one. You can select an item by typing its number in chat.", brief="Used to search for movies and tv shows.", aliases=["Search"])
     async def search(self, context, *args):

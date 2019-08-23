@@ -7,6 +7,7 @@ import os
 import discord
 from discord.ext import commands
 from utils.api_handler import purge_cache
+from utils.file_handler import download, make_genre_ids_file
 
 def get_prefix(client, message):#
     prefixes = ['?']#allowed prefixes
@@ -54,6 +55,11 @@ async def on_ready():#Prints that bot has logged in when ready.
     print(client.user.name)
     print(client.user.id)
     print('------')
+    try:
+        download("data")
+        make_genre_ids_file("data")
+    except:
+        print("Failed to download latest files")
 
 client.loop.create_task(auto_purge())
 client.loop.create_task(change_status())
