@@ -300,6 +300,7 @@ class _discover(_details):
     def _year(self, year):
         if year is not None:
             self.query_string["primary_release_year"] = year.group().strip("-")
+            self.description_string["year"] = [year.group().strip("-")]
 
     def _sort_matches(self, matches):
         for _, match in enumerate(matches, start=1):
