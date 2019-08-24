@@ -1,41 +1,47 @@
-from ..base import _base
+from ..base import _get_obj, _call, _get_url, _get_api_key
 
-class Lists(_base):
-    def get(self, list_id, sort="title.asc", page=1):
-        return self._get_obj(self._call('GET', f'{self._url}4/list/{list_id}?api_key={self._api_key}&page={page}&sort_by={sort}', disable_cache=True))
+class Lists():
+    @staticmethod
+    def get(list_id, sort="title.asc", page=1):
+        return _get_obj(_call('GET', f'{_get_url()}4/list/{list_id}?{_get_api_key()}&page={page}&sort_by={sort}', disable_cache=True))
 
-    def create(self, access_token):
+    @staticmethod
+    def create(access_token):
         payload = "{\"name\":\"Watched - Marvin\", \"iso_639_1\":\"en\"}"
         headers = {
             'authorization': "Bearer "+access_token,
             'content-type': "application/json;charset=utf-8"
             }
-        return self._get_obj(self._call('POST', f'{self._url}4/list', headers=headers, payload=payload), key=None)
+        return _get_obj(_call('POST', f'{_get_url()}4/list', headers=headers, payload=payload), key=None)
 
-    def delete(self, list_id, access_token):
+    @staticmethod
+    def delete(list_id, access_token):
         headers = {
             'authorization': "Bearer "+access_token,
             'content-type': "application/json;charset=utf-8"
             }
-        return self._get_obj(self._call('DELETE', f'{self._url}4/list{list_id}', headers=headers), key=None)
+        return _get_obj(_call('DELETE', f'{_get_url()}4/list{list_id}', headers=headers), key=None)
 
-    def add_items(self, list_id, access_token, payload):
+    @staticmethod
+    def add_items(list_id, access_token, payload):
         headers = {
             'authorization': f'Bearer {access_token}',
             'content-type': "application/json;charset=utf-8"
             }
-        return self._get_obj(self._call('POST', f'{self._url}4/list/{list_id}/items', headers=headers, payload=payload))
+        return _get_obj(_call('POST', f'{_get_url()}4/list/{list_id}/items', headers=headers, payload=payload))
 
-    def update_items(self, list_id, access_token, payload):
+    @staticmethod
+    def update_items(list_id, access_token, payload):
         headers = {
             'authorization': f'Bearer {access_token}',
             'content-type': "application/json;charset=utf-8"
             }
-        return self._get_obj(self._call('PUT', f'{self._url}4/list/{list_id}/items', headers=headers, payload=payload))
+        return _get_obj(_call('PUT', f'{_get_url()}4/list/{list_id}/items', headers=headers, payload=payload))
 
-    def remove_items(self, list_id, access_token, payload):
+    @staticmethod
+    def remove_items(list_id, access_token, payload):
         headers = {
             'authorization': f'Bearer {access_token}',
             'content-type': "application/json;charset=utf-8"
             }
-        return self._get_obj(self._call('DELETE', f'{self._url}4/list/{list_id}/items', headers=headers, payload=payload))
+        return _get_obj(_call('DELETE', f'{_get_url()}4/list/{list_id}/items', headers=headers, payload=payload))

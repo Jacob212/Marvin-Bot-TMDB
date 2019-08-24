@@ -1,8 +1,10 @@
-from ..base import _base
+from ..base import _get_obj, _call, _get_url, _get_api_key
 
-class Genres(_base):
-    def movie(self):
-        return self._get_obj(self._call('GET', f'{self._url}3/genre/movie/list?api_key={self._api_key}&language=en-US'), key=None)
+class Genres():
+    @staticmethod
+    def movie():
+        return _get_obj(_call('GET', f'{_get_url()}3/genre/movie/list?{_get_api_key()}&language=en-US'), key=None)
 
-    def tv(self):
-        return self._get_obj(self._call('GET', f'{self._url}3/genre/tv/list?api_key={self._api_key}&language=en-US'), key=None)
+    @staticmethod
+    def tv():
+        return _get_obj(_call('GET', f'{_get_url()}3/genre/tv/list?{_get_api_key()}&language=en-US'), key=None)

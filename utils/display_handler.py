@@ -5,12 +5,6 @@ from utils.api_handler import Search, Lists, Movies, TV, Discover
 from utils.sql import get_account_details
 from utils.file_handler import find_exact
 
-SEARCH = Search()
-LISTS = Lists()
-MOVIES = Movies()
-TV = TV()
-DISCOVER = Discover()
-
 movie = (
     ("title", "overview", "imdb_id"),
     ("original_title", "Original Title", False, None),
@@ -89,7 +83,6 @@ class _base():
             response = await self._get_response(["◀", "▶"])
             if self.run:
                 await self._handle_response(response)
-        print("finished")
 
     async def _get_response(self, reactions):
         try:
@@ -179,7 +172,7 @@ class _details(_base):
             except AttributeError:
                 media = self.options["media"]
             if media == "movie":
-                detail = MOVIES.details(self.results[index].id)
+                detail = Movies.details(self.results[index].id)
                 embed = _embed_format(detail, "movie", self.context.message.author.color.value)
             elif media == "tv":
                 detail = TV.details(self.results[index].id)
@@ -232,9 +225,9 @@ class _details(_base):
                 if reaction.emoji == "✅":
                     account_details = get_account_details(self.context.author.id)
                     payload = "{\"items\":[{\"media_type\":\""+media+"\",\"media_id\":"+str(self.results[index].id)+",\"comment\": \"S:"+season+" E:"+episode+"\"}]}"
-                    LISTS.add_items(account_details[2], account_details[0], payload)
+                    Lists.add_items(account_details[2], account_details[0], payload)
                     if media == "tv":
-                        LISTS.update_items(account_details[2], account_details[0], payload)
+                        Lists.update_items(account_details[2], account_details[0], payload)
                 await temp_message.delete()
                 break
 
@@ -254,7 +247,7 @@ class _details(_base):
                 if reaction.emoji == "✅":
                     account_details = get_account_details(self.context.author.id)
                     payload = "{\"items\":[{\"media_type\":\""+media+"\",\"media_id\":"+str(self.results[index].id)+"}]}"
-                    LISTS.remove_items(account_details[2], account_details[0], payload)
+                    Lists.remove_items(account_details[2], account_details[0], payload)
                 await temp_message.delete()
                 break
 
@@ -266,13 +259,13 @@ class SearchPages(_details):
     def _api_call(self):
         if self.options["media"] == "movie":
             embed = discord.Embed(title="Search results for:", description=self.options["query"])
-            self.results, extra = SEARCH.movie(self.options["query"], self.page)
+            self.results, extra = Search.movie(self.options["query"], self.page)
         elif self.options["media"] == "tv":
             embed = discord.Embed(title="Search results for:", description=self.options["query"])
-            self.results, extra = SEARCH.tv(self.options["query"], self.page)
+            self.results, extra = Search.tv(self.options["query"], self.page)
         else:
             embed = discord.Embed(title="Search results for:", description=self.options["query"])
-            self.results, extra = SEARCH.multi(self.options["query"], self.page)
+            self.results, extra = Search.multi(self.options["query"], self.page)
         return embed, extra
 
 class WatchedPages(_details):
@@ -282,7 +275,7 @@ class WatchedPages(_details):
 
     def _api_call(self):
         embed = discord.Embed(title="Watched list of:", description=self.options["mention"])
-        self.results, extra = LISTS.get(self.options["listID"], self.options["latest"], self.page)
+        self.results, extra = Lists.get(self.options["listID"], self.options["latest"], self.page)
         return embed, extra
 
 class _discover(_details):
@@ -336,13 +329,13 @@ class _discover(_details):
 class DiscoverMoviesPages(_discover):
     def _api_call(self):
         embed = discord.Embed(title="Movies filtered by:", description=self._description())
-        self.results, extra = DISCOVER.movie(self.query_string, self.page)
+        self.results, extra = Discover.movie(self.query_string, self.page)
         return embed, extra
 
 class DiscoverTVPages(_discover):
     def _api_call(self):
         embed = discord.Embed(title="TV shows filtered by:", description=self._description())
-        self.results, extra = DISCOVER.tv(self.query_string, self.page)
+        self.results, extra = Discover.tv(self.query_string, self.page)
         return embed, extra
 
 # class LatestMoviesPages(_details):
@@ -361,7 +354,7 @@ class KeywordPages(_base):
 
     def _api_call(self):
         embed = discord.Embed(title="Keywords related to:", description=self.options["query"])
-        self.results, extra = SEARCH.keywords(self.options["query"], self.page)
+        self.results, extra = Search.keywords(self.options["query"], self.page)
         return embed, extra
 
     def _create_list(self, media_type):
