@@ -7,7 +7,6 @@ from requests import get
 from utils.api_handler import Genres
 
 _EXPORTS = ["movie_ids", "tv_series_ids", "person_ids", "collection_ids", "tv_network_ids", "keyword_ids", "production_company_ids"]
-_GENRES = Genres()
 
 def _set_time():
     date = datetime.utcnow()
@@ -48,11 +47,11 @@ def download(location):
 
 def make_genre_ids_file(location):
     _make_dir(location)
-    result = _GENRES.movie()
+    result = Genres.movie()
     with open(f'./{location}/movie_genre_ids.json', "w", encoding="utf-8") as f:
         for genre in result.genres:
             f.write(str(genre).replace("'", '"').lower()+"\n")
-    result = _GENRES.tv()
+    result = Genres.tv()
     with open(f'./{location}/tv_genre_ids.json', "w", encoding="utf-8") as f:
         for genre in result.genres:
             f.write(str(genre).replace("'", '"').lower()+"\n")
