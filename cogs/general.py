@@ -8,6 +8,7 @@ from utils.display_handler import SearchPages, WatchedPages, KeywordPages, Disco
 class GeneralCommands(commands.Cog):
     def __init__(self, client):
         self.client = client
+        self.commands_by_user_id = {}
 
     @commands.command(description="Use -movies or -shows to filter to only one. You can select an item by typing its number in chat.", brief="Used to search for movies and tv shows.", aliases=["Search"])
     async def search(self, context, *args):
@@ -26,10 +27,10 @@ class GeneralCommands(commands.Cog):
         else:
             options["query"] = " ".join(query)
             page = 1
-            if context.author.id in globals():
-                globals()[context.author.id].run = False
-            globals()[context.author.id] = SearchPages(self.client, context, options, page)
-            await globals()[context.author.id].main()
+            if context.author.id in self.commands_by_user_id:
+                self.commands_by_user_id[context.author.id].run = False
+            self.commands_by_user_id[context.author.id] = SearchPages(self.client, context, options, page)
+            await self.commands_by_user_id[context.author.id].main()
 
     @commands.command(description="You can also edit your list here by typing the number in chat that you want to change.", brief="Used to show yours or others watched list. (eg ?watched @Riot212)", aliases=["Watched"])
     async def watched(self, context, *args):
@@ -45,19 +46,19 @@ class GeneralCommands(commands.Cog):
                 options["latest"] = "original_order.desc"
         options["listID"] = get_account_details(search_user)[2]
         page = 1
-        if context.author.id in globals():
-            globals()[context.author.id].run = False
-        globals()[context.author.id] = WatchedPages(self.client, context, options, page)
-        await globals()[context.author.id].main()
+        if context.author.id in self.commands_by_user_id:
+            self.commands_by_user_id[context.author.id].run = False
+        self.commands_by_user_id[context.author.id] = WatchedPages(self.client, context, options, page)
+        await self.commands_by_user_id[context.author.id].main()
 
     @commands.command(description="", brief="", aliases=["Keywords"])
     async def keywords(self, context, *keyword):
         options = {"query": " ".join(keyword)}
         page = 1
-        if context.author.id in globals():
-            globals()[context.author.id].run = False
-        globals()[context.author.id] = KeywordPages(self.client, context, options, page)
-        await globals()[context.author.id].main()
+        if context.author.id in self.commands_by_user_id:
+            self.commands_by_user_id[context.author.id].run = False
+        self.commands_by_user_id[context.author.id] = KeywordPages(self.client, context, options, page)
+        await self.commands_by_user_id[context.author.id].main()
 
     @commands.command(description="You can filter movies by entering genres and keywords with + or - (include, exclude) before the genre or keyword. e.g ?movies +action -adventure.", brief="Used to filter movies based on genres. Do ?help movies for more info.", aliases=["Movies"])
     async def movies(self, context, *args):
@@ -69,10 +70,10 @@ class GeneralCommands(commands.Cog):
             "matches": genre_matches,
             "year": year_matches
             }
-        if context.author.id in globals():
-            globals()[context.author.id].run = False
-        globals()[context.author.id] = DiscoverMoviesPages(self.client, context, options, page)
-        await globals()[context.author.id].before_main()
+        if context.author.id in self.commands_by_user_id:
+            self.commands_by_user_id[context.author.id].run = False
+        self.commands_by_user_id[context.author.id] = DiscoverMoviesPages(self.client, context, options, page)
+        await self.commands_by_user_id[context.author.id].before_main()
 
     @commands.command(description="You can filter tv shows by entering genres and keywords with + or - (include, exclude) before the genre or keyword. e.g ?shows +action -adventure.", brief="Used to filter tv shows based on genres. Do ?help shows for more info.", aliases=["Shows"])
     async def shows(self, context, *args):
@@ -84,10 +85,10 @@ class GeneralCommands(commands.Cog):
             "matches": genre_matches,
             "year": year_matches
             }
-        if context.author.id in globals():
-            globals()[context.author.id].run = False
-        globals()[context.author.id] = DiscoverTVPages(self.client, context, options, page)
-        await globals()[context.author.id].before_main()
+        if context.author.id in self.commands_by_user_id:
+            self.commands_by_user_id[context.author.id].run = False
+        self.commands_by_user_id[context.author.id] = DiscoverTVPages(self.client, context, options, page)
+        await self.commands_by_user_id[context.author.id].before_main()
 
 def setup(client):
     client.add_cog(GeneralCommands(client))
