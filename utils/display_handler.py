@@ -338,13 +338,15 @@ class DiscoverTVPages(_discover):
         self.results, extra = Discover.tv(self.query_string, self.page)
         return embed, extra
 
-# class LatestMoviesPages(_details):
-#     def __init__(self, client, context, options, page):
-#         super().__init__(client, context, options, page)
-#         self.empty_message = "Nothing is being released soon"
+class AiringTVPages(_details):
+    def __init__(self, client, context, options, page):
+        super().__init__(client, context, options, page)
+        self.empty_message = "Nothing airing soon."
 
-#     def _api_call(self):
-#         embed = discord.Embed(title="")
+    def _api_call(self):
+        embed = discord.Embed(title="TV shows airing todat:")
+        self.results, extra = TV.airing_today(self.page)
+        return embed, extra
 
 class KeywordPages(_base):
     def __init__(self, client, context, options, page):

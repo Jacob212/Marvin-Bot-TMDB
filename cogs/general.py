@@ -3,7 +3,7 @@ import re
 import discord
 from discord.ext import commands
 from utils.sql import get_account_details
-from utils.display_handler import SearchPages, WatchedPages, KeywordPages, DiscoverMoviesPages, DiscoverTVPages
+from utils.display_handler import SearchPages, WatchedPages, KeywordPages, DiscoverMoviesPages, DiscoverTVPages, AiringTVPages
 
 class GeneralCommands(commands.Cog):
     def __init__(self, client):
@@ -89,6 +89,15 @@ class GeneralCommands(commands.Cog):
             self.commands_by_user_id[context.author.id].run = False
         self.commands_by_user_id[context.author.id] = DiscoverTVPages(self.client, context, options, page)
         await self.commands_by_user_id[context.author.id].before_main()
+
+    @commands.command(description="", brief="", aliases=["Airing"])
+    async def airing(self, context):
+        page = 1
+        options = {"media": "tv"}
+        if context.author.id in self.commands_by_user_id:
+            self.commands_by_user_id[context.author.id].run = False
+        self.commands_by_user_id[context.author.id] = AiringTVPages(self.client, context, options, page)
+        await self.commands_by_user_id[context.author.id].main()
 
 def setup(client):
     client.add_cog(GeneralCommands(client))
