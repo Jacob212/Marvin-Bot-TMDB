@@ -2,7 +2,7 @@ import datetime
 import asyncio
 import discord
 from utils.api_handler import Search, Lists, Movies, TV, Discover
-from utils.sql import get_account_details
+from utils.sql import get_account_details, get_show, add_show, add_sub, get_sub, remove_sub
 from utils.file_handler import find_exact
 
 movie = (
@@ -174,20 +174,22 @@ class _details(_base):
             if media == "movie":
                 detail = Movies.details(self.results[index].id)
                 embed = _embed_format(detail, "movie", self.context.message.author.color.value)
+                reactions = ["◀", "⏬", "❌"]
             elif media == "tv":
                 detail = TV.details(self.results[index].id)
                 embed = _embed_format(detail, "tv", self.context.message.author.color.value)
+                reactions = ["◀", "⏬", "❌", "🔔"]
         else:
             embed = discord.Embed(title="That is not an option", description="Please go back", color=discord.Colour.dark_red())
         await self.bots_message.edit(embed=embed)
         await self.bots_message.remove_reaction("▶", self.client.user)
-        await self._add_reactions(["⏬", "❌"], self.bots_message)
+        await self._add_reactions(reactions[1:], self.bots_message)
         while self.run:
-            reaction, _ = await self._wait_for_reaction(["◀", "⏬", "❌"], self.bots_message)
+            reaction, _ = await self._wait_for_reaction(reactions, self.bots_message)
             if not self.run:
                 break
             if reaction.emoji == "◀":
-                await self._remove_reactions(["⏬", "❌"], self.bots_message, self.client.user)
+                await self._remove_reactions(["⏬", "❌", "🔔"], self.bots_message, self.client.user)
                 await self.bots_message.remove_reaction("◀", self.context.message.author)
                 break
             elif reaction.emoji == "⏬":
@@ -196,6 +198,9 @@ class _details(_base):
             elif reaction.emoji == "❌":
                 await self.bots_message.remove_reaction("❌", self.context.message.author)
                 await self._remove_watchlist(index, media)
+            elif reaction.emoji == "🔔" and media == "tv":
+                await self.bots_message.remove_reaction("🔔", self.context.message.author)
+                await self._sub(index)
 
     async def _add_watchlist(self, index, media):
         if index <= len(self.results):
@@ -250,6 +255,27 @@ class _details(_base):
                     Lists.remove_items(account_details[2], account_details[0], payload)
                 await temp_message.delete()
                 break
+
+    async def _sub(self, index):
+        embed = discord.Embed(title=f'Are you sure you want to turn on notifications for {self.results[index].name}')
+        temp_message = await self.context.send(embed=embed)
+        await self._add_reactions(["✅", "❌"], temp_message)
+        while self.run:
+            reaction, _ = await self._wait_for_reaction(["✅", "❌"], temp_message)
+            if not self.run:
+                break
+            show = get_show(self.results[index].id)
+            sub = get_sub(self.context.author.id, self.results[index].id)
+            if reaction.emoji == "✅":
+                if show is None:
+                    add_show(self.results[index].name, self.results[index].id)
+                if sub is None:
+                    add_sub(self.context.author.id, self.results[index].id)
+            elif reaction.emoji == "❌":
+                if sub is not None:
+                    remove_sub(self.context.author.id, self.results[index].id)
+            await temp_message.delete()
+            break
 
 class SearchPages(_details):
     def __init__(self, client, context, options, page):

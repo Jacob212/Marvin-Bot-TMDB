@@ -6,8 +6,10 @@ from itertools import cycle
 import os
 import discord
 from discord.ext import commands
-from utils.api_handler import purge_cache
+from utils.api_handler import purge_cache, TV
 from utils.file_handler import download, make_genre_ids_file
+from utils.sql import get_subs
+from datetime import datetime, timedelta
 
 def get_prefix(client, message):#
     prefixes = ['?']#allowed prefixes
@@ -29,6 +31,25 @@ async def auto_purge():#Clears the requests cache of expired responses every hou
     while not client.is_closed():
         purge_cache()
         await asyncio.sleep(3600)
+
+async def notification():#sends a notification to the people that have "subed" to a tv show that has an episode airing today
+    while True:
+        now = datetime.utcnow
+        to = (now() + timedelta(days = 1)).replace(hour=20, minute=0, second=0)
+        await asyncio.sleep((to-now()).seconds)
+        page = 1
+        while True:
+            results, extra = TV.airing_today(page)
+            for res in results:
+                results = get_subs(res.id)
+                if results != []:
+                    for user_id in results[0]:
+                        member = client.get_user(user_id)
+                        await member.send(res.name)
+            if page == int(extra.total_pages):
+                break
+            page += 1
+        await client.close()
 
 #list of all cogs that should be loaded on startup
 INITIAL_EXTENSIONS = ['cogs.owner', 'cogs.general', 'cogs.management', 'cogs.error_handling']#
@@ -61,6 +82,7 @@ async def on_ready():#Prints that bot has logged in when ready.
     except:
         print("Failed to download latest files")
 
-client.loop.create_task(auto_purge())
 client.loop.create_task(change_status())
+client.loop.create_task(auto_purge())
+client.loop.create_task(notification())
 client.run(os.environ.get("DISCORD_BOT_TOKEN"))
