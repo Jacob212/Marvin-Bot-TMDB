@@ -7,7 +7,7 @@ class TV():
 
     @staticmethod
     def airing_today(page=1):
-      return _get_obj(_call('GET', f'{_get_url()}3/tv/airing_today?{_get_api_key()}&language=en-US&page={page}'))
+        return _get_obj(_call('GET', f'{_get_url()}3/tv/airing_today?{_get_api_key()}&language=en-US&page={page}'))
 
     @staticmethod
     def on_the_air(page=1):

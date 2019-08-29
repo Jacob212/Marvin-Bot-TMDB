@@ -35,7 +35,7 @@ async def auto_purge():#Clears the requests cache of expired responses every hou
 async def notification():#sends a notification to the people that have "subed" to a tv show that has an episode airing today
     while True:
         now = datetime.utcnow
-        to = (now() + timedelta(days = 1)).replace(hour=20, minute=0, second=0)
+        to = (now() + timedelta(days=1)).replace(hour=20, minute=0, second=0)
         await asyncio.sleep((to-now()).seconds)
         page = 1
         while True:
