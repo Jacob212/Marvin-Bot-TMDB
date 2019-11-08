@@ -1,9 +1,10 @@
 import datetime
 import asyncio
 import discord
-from utils.api_handler import Search, Lists, Movies, TV, Discover
 from utils.sql import get_account_details, get_show, add_show, add_sub, get_sub, remove_sub
 from utils.file_handler import find_exact
+from fulltmdb import search, movies, tv, discover
+from fulltmdb.v4 import lists
 
 movie = (
     ("title", "overview", "imdb_id"),
@@ -37,17 +38,17 @@ person = (
 
 def _embed_format(detail, media, color):
     try:
-        getattr(detail, globals()[media][0][2])
-        url = f'https://www.imdb.com/{globals()[media][0][0]}/{getattr(detail, globals()[media][0][2])}'
+        detail[globals()[media][0][2]]
+        url = f'https://www.imdb.com/{globals()[media][0][0]}/{detail[globals()[media][0][2]]}'
     except TypeError:
         url = None
-    embed = discord.Embed(title=getattr(detail, globals()[media][0][0]),
-        description=f'{getattr(detail, globals()[media][0][1])}',
+    embed = discord.Embed(title=detail[globals()[media][0][0]],
+        description=f'{detail [globals()[media][0][1]]}',
         url=url,
         color=color)
     for attr, name, inline, fmt in globals()[media][1:]:
         try:
-            value = getattr(detail, attr)
+            value = detail[attr]
             if value is None or value == "":
                 continue
         except AttributeError:
@@ -58,7 +59,7 @@ def _embed_format(detail, media, color):
             value = fmt(value)
         embed.add_field(name=name, value=value, inline=inline)
         try:
-            value = getattr(detail, "backdrop_path")
+            value = detail["backdrop_path"]
         except AttributeError:
             pass
         else:
@@ -77,8 +78,8 @@ class _base():
 
     async def main(self):
         while self.run:
-            embed, extra = self._api_call()
-            embed = self._finish_embed(embed, extra, self.options["media"])
+            embed = self._api_call()
+            embed = self._finish_embed(embed, self.options["media"])
             await self._send_message(embed)
             response = await self._get_response(["◀", "▶"])
             if self.run:
@@ -99,21 +100,21 @@ class _base():
         for reaction in reactions:
             await message.remove_reaction(reaction, author)
 
-    def _finish_embed(self, embed, extra, media_type):
-        if self.results == []:
+    def _finish_embed(self, embed, media_type):
+        if self.result['results'] == []:
             message = self.empty_message
         else:
             message = self._create_list(media_type)
-        embed.add_field(name=f'Page: {extra.page}/{extra.total_pages}   Total results: {extra.total_results}', value=message)
+        embed.add_field(name=f'Page: {self.result["page"]}/{self.result["total_pages"]}   Total results: {self.result["total_results"]}', value=message)
         return embed
 
     def _create_list(self, media_type):
         message = ""
-        for result in self.results:
+        for result in self.result['results']:
             if media_type is None:
-                message += f'**{self.results.index(result)+1} - {result.media_type.title()}**: {getattr(result, globals()[result.media_type][0][0])}\n'
+                message += f'**{self.result["results"].index(result)+1} - {result["media_type"].title()}**: {result[globals()[result["media_type"]][0][0]]}\n'
             else:
-                message += f'**{self.results.index(result)+1} - {media_type.title()}**: {getattr(result, globals()[media_type][0][0])}\n'
+                message += f'**{self.result["results"].index(result)+1} - {media_type.title()}**: {result[globals()[media_type][0][0]]}\n'
         return message
 
     async def _send_message(self, embed):
@@ -125,7 +126,7 @@ class _base():
 
     async def _handle_response(self, response):
         reaction = response[0]
-        if reaction.emoji == "▶" and len(self.results) == 20:
+        if reaction.emoji == "▶" and len(self.result['results']) == 20:
             self.page += 1
         elif reaction.emoji == "◀" and self.page != 1:
             self.page -= 1
@@ -135,7 +136,7 @@ class _details(_base):
     async def _handle_response(self, response):
         if isinstance(response, tuple):
             reaction = response[0]
-            if reaction.emoji == "▶" and len(self.results) == 20:
+            if reaction.emoji == "▶" and len(self.result['results']) == 20:
                 self.page += 1
             elif reaction.emoji == "◀" and self.page != 1:
                 self.page -= 1
@@ -166,17 +167,17 @@ class _details(_base):
             return None, None
 
     async def _details(self, index):
-        if index <= len(self.results):
+        if index <= len(self.result['results']):
             try:
-                media = self.results[index].media_type
-            except AttributeError:
+                media = self.result['results'][index]['media_type']
+            except KeyError:
                 media = self.options["media"]
             if media == "movie":
-                detail = Movies.details(self.results[index].id)
+                detail = movies.details(self.result['results'][index]['id'])
                 embed = _embed_format(detail, "movie", self.context.message.author.color.value)
                 reactions = ["◀", "⏬", "❌"]
             elif media == "tv":
-                detail = TV.details(self.results[index].id)
+                detail = TV.details(self.result['results'][index]['id'])
                 embed = _embed_format(detail, "tv", self.context.message.author.color.value)
                 reactions = ["◀", "⏬", "❌", "🔔"]
         else:
@@ -203,24 +204,24 @@ class _details(_base):
                 await self._sub(index)
 
     async def _add_watchlist(self, index, media):
-        if index <= len(self.results):
+        if index <= len(self.result['results']):
             if media == "movie":
                 season = ""
                 episode = ""
-                embed = discord.Embed(title=f'Are you sure you want to add {self.results[index].title} to your watched list?')
+                embed = discord.Embed(title=f'Are you sure you want to add {self.result["results"][index]["title"]} to your watched list?')
                 temp_message = await self.context.send(embed=embed)
             elif media == "tv":
-                embed = discord.Embed(title=f'What season of {self.results[index].name} have you watched up too?')
+                embed = discord.Embed(title=f'What season of {self.result["results"][index]["name"]} have you watched up too?')
                 temp_message = await self.context.send(embed=embed)
                 response = await self.client.wait_for('message', check=lambda m: m.channel == self.context.channel and m.content.isdigit())
                 season = response.content
                 await response.delete()
-                embed = discord.Embed(title=f'What episode of {self.results[index].name} season {season} have you watched up too?')
+                embed = discord.Embed(title=f'What episode of {self.result["results"][index]["name"]} season {season} have you watched up too?')
                 await temp_message.edit(embed=embed)
                 response = await self.client.wait_for('message', check=lambda m: m.channel == self.context.channel and m.content.isdigit())
                 episode = response.content
                 await response.delete()
-                embed = discord.Embed(title=f'Are you sure you want to add {self.results[index].name} - {season} - {episode} to your watched list')
+                embed = discord.Embed(title=f'Are you sure you want to add {self.result["results"][index]["name"]} - {season} - {episode} to your watched list')
                 await temp_message.edit(embed=embed)
             await self._add_reactions(["✅", "❌"], temp_message)
             while self.run:
@@ -229,7 +230,7 @@ class _details(_base):
                     break
                 if reaction.emoji == "✅":
                     account_details = get_account_details(self.context.author.id)
-                    payload = "{\"items\":[{\"media_type\":\""+media+"\",\"media_id\":"+str(self.results[index].id)+",\"comment\": \"S:"+season+" E:"+episode+"\"}]}"
+                    payload = "{\"items\":[{\"media_type\":\""+media+"\",\"media_id\":"+str(self.result['results'][index]['id'])+",\"comment\": \"S:"+season+" E:"+episode+"\"}]}"
                     Lists.add_items(account_details[2], account_details[0], payload)
                     if media == "tv":
                         Lists.update_items(account_details[2], account_details[0], payload)
@@ -239,10 +240,10 @@ class _details(_base):
     async def _remove_watchlist(self, index, media):
         if index <= len(self.results):
             if media == "movie":
-                embed = discord.Embed(title=f'Are you sure you want to remove {self.results[index].title} from your watched list?')
+                embed = discord.Embed(title=f'Are you sure you want to remove {self.result["results"][index]["title"]} from your watched list?')
                 temp_message = await self.context.send(embed=embed)
             elif media == "tv":
-                embed = discord.Embed(title=f'Are you sure you want to remove {self.results[index].name} from your watched list?')
+                embed = discord.Embed(title=f'Are you sure you want to remove {self.result["results"][index]["name"]} from your watched list?')
                 temp_message = await self.context.send(embed=embed)
             await self._add_reactions(["✅", "❌"], temp_message)
             while self.run:
@@ -252,28 +253,28 @@ class _details(_base):
                 if reaction.emoji == "✅":
                     account_details = get_account_details(self.context.author.id)
                     payload = "{\"items\":[{\"media_type\":\""+media+"\",\"media_id\":"+str(self.results[index].id)+"}]}"
-                    Lists.remove_items(account_details[2], account_details[0], payload)
+                    lists.remove_items(account_details[0], account_details[2], payload)
                 await temp_message.delete()
                 break
 
     async def _sub(self, index):
-        embed = discord.Embed(title=f'Are you sure you want to turn on notifications for {self.results[index].name}')
+        embed = discord.Embed(title=f'Are you sure you want to turn on notifications for {self.result["results"][index]["name"]}')
         temp_message = await self.context.send(embed=embed)
         await self._add_reactions(["✅", "❌"], temp_message)
         while self.run:
             reaction, _ = await self._wait_for_reaction(["✅", "❌"], temp_message)
             if not self.run:
                 break
-            show = get_show(self.results[index].id)
-            sub = get_sub(self.context.author.id, self.results[index].id)
+            show = get_show(self.result["results"][index]['id'])
+            sub = get_sub(self.context.author.id, self.result["results"][index]['id'])
             if reaction.emoji == "✅":
                 if show is None:
-                    add_show(self.results[index].name, self.results[index].id)
+                    add_show(self.results[index].name, self.result["results"][index]['id'])
                 if sub is None:
-                    add_sub(self.context.author.id, self.results[index].id)
+                    add_sub(self.context.author.id, self.result["results"][index]['id'])
             elif reaction.emoji == "❌":
                 if sub is not None:
-                    remove_sub(self.context.author.id, self.results[index].id)
+                    remove_sub(self.context.author.id, self.result["results"][index]['id'])
             await temp_message.delete()
             break
 
@@ -285,14 +286,14 @@ class SearchPages(_details):
     def _api_call(self):
         if self.options["media"] == "movie":
             embed = discord.Embed(title="Search results for:", description=self.options["query"])
-            self.results, extra = Search.movie(self.options["query"], self.page)
+            self.result = search.movie(query=self.options["query"], page=self.page)
         elif self.options["media"] == "tv":
             embed = discord.Embed(title="Search results for:", description=self.options["query"])
-            self.results, extra = Search.tv(self.options["query"], self.page)
+            self.result = search.tv(query=self.options["query"], page=self.page)
         else:
             embed = discord.Embed(title="Search results for:", description=self.options["query"])
-            self.results, extra = Search.multi(self.options["query"], self.page)
-        return embed, extra
+            self.result = search.multi(query=self.options["query"], page=self.page)
+        return embed
 
 class WatchedPages(_details):
     def __init__(self, client, context, options, page):
@@ -301,8 +302,8 @@ class WatchedPages(_details):
 
     def _api_call(self):
         embed = discord.Embed(title="Watched list of:", description=self.options["mention"])
-        self.results, extra = Lists.get(self.options["listID"], self.options["latest"], self.page)
-        return embed, extra
+        self.result = lists.get(self.options["listID"], sort_by=self.options["latest"], page=self.page)
+        return embed
 
 class _discover(_details):
     def __init__(self, client, context, options, page):
@@ -355,14 +356,15 @@ class _discover(_details):
 class DiscoverMoviesPages(_discover):
     def _api_call(self):
         embed = discord.Embed(title="Movies filtered by:", description=self._description())
-        self.results, extra = Discover.movie(self.query_string, self.page)
-        return embed, extra
+        print(self.query_string)
+        self.result = discover.movie(query=self.query_string, page=self.page)
+        return embed
 
 class DiscoverTVPages(_discover):
     def _api_call(self):
         embed = discord.Embed(title="TV shows filtered by:", description=self._description())
-        self.results, extra = Discover.tv(self.query_string, self.page)
-        return embed, extra
+        self.result = discover.tv(query=self.query_string, page=self.page)
+        return embed
 
 class AiringTVPages(_details):
     def __init__(self, client, context, options, page):
@@ -371,8 +373,8 @@ class AiringTVPages(_details):
 
     def _api_call(self):
         embed = discord.Embed(title="TV shows airing todat:")
-        self.results, extra = TV.airing_today(self.page)
-        return embed, extra
+        self.result = tv.airing_today(page=self.page)
+        return embed
 
 class KeywordPages(_base):
     def __init__(self, client, context, options, page):
@@ -382,11 +384,11 @@ class KeywordPages(_base):
 
     def _api_call(self):
         embed = discord.Embed(title="Keywords related to:", description=self.options["query"])
-        self.results, extra = Search.keywords(self.options["query"], self.page)
-        return embed, extra
+        self.result = search.keywords(query=self.options["query"], page=self.page)
+        return embed
 
     def _create_list(self, media_type):
         message = ""
-        for result in self.results:
-            message += f'**{self.results.index(result)+1}**: - {result.name}\n'
+        for item in self.result['results']:
+            message += f'**{self.result["results"].index(result)+1}**: - {item["name"]}\n'
         return message

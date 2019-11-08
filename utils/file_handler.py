@@ -4,7 +4,7 @@ from gzip import open as gzopen
 from os import remove, mkdir, path, walk
 from datetime import datetime, timedelta
 from requests import get
-from utils.api_handler import Genres
+from fulltmdb import genres
 
 _EXPORTS = ["movie_ids", "tv_series_ids", "person_ids", "collection_ids", "tv_network_ids", "keyword_ids", "production_company_ids"]
 
@@ -47,13 +47,13 @@ def download(location):
 
 def make_genre_ids_file(location):
     _make_dir(location)
-    result = Genres.movie()
+    result = genres.movie()
     with open(f'./{location}/movie_genre_ids.json', "w", encoding="utf-8") as f:
-        for genre in result.genres:
+        for genre in result['genres']:
             f.write(str(genre).replace("'", '"').lower()+"\n")
-    result = Genres.tv()
+    result = genres.tv()
     with open(f'./{location}/tv_genre_ids.json', "w", encoding="utf-8") as f:
-        for genre in result.genres:
+        for genre in result['genres']:
             f.write(str(genre).replace("'", '"').lower()+"\n")
 
 def find_exact(location, file, find):

@@ -1,6 +1,6 @@
 import discord
 from discord.ext import commands
-from utils.api_handler import Auth, Lists
+from fulltmdb.v4 import auth, lists
 from utils.sql import get_account_details, setup_account, update_access_token, update_list_id, update_account
 
 class ManagementCommands(commands.Cog):
@@ -13,16 +13,16 @@ class ManagementCommands(commands.Cog):
         account_details = get_account_details(context.author.id)
         if account_details is None or account_details[0] is None:
             await context.send("I have sent you more information to your DMs")
-            response = Auth.request()
+            response = auth.request()
             embed = discord.Embed(title="Link", description='To use all the features of this bot you will need an account with The Movie Database and approve the bot to have access to your account. Respond with "approved" when you have finshed the links instructions', url=f'https://www.themoviedb.org/auth/access?request_token={response.request_token}')
             await context.author.send(embed=embed)
             await self.client.wait_for('message', check=lambda m: isinstance(m.channel, discord.DMChannel) and m.content in ["approved", "Approved"])
-            approved = Auth.access(response.request_token)
+            approved = auth.access(response.request_token)
             if account_details is None:
-                created_list = Lists.create(approved.access_token)
+                created_list = lists.create(approved.access_token)
                 setup_account(context.author.name, context.author.id, approved.access_token, approved.account_id, created_list.id)
             elif account_details[2] is None:
-                created_list = Lists.create(approved.access_token)
+                created_list = lists.create(approved.access_token)
                 update_account(context.author.id, approved.access_token, approved.account_id, created_list.id)
             else:
                 update_access_token(context.author.id, approved.access_token)
@@ -38,7 +38,7 @@ class ManagementCommands(commands.Cog):
         reaction, user = await self.client.wait_for("reaction_add", check=lambda r, u: r.emoji in ["✅", "❌"] and u.id == context.message.author.id and r.message.id == bots_message.id)
         if reaction.emoji == "✅":
             account_details = get_account_details(context.author.id)[0]
-            Auth.delete(account_details)
+            auth.delete(account_details)
             update_access_token(context.author.id, None)
         await bots_message.delete()
 
@@ -47,7 +47,7 @@ class ManagementCommands(commands.Cog):
         await context.message.delete()
         account_details = get_account_details(context.author.id)
         if account_details[2] is None:
-            response = Lists.create(account_details[1])
+            response = lists.create(account_details[1])
             print(response.status_message)
             await context.send("A new list has been created.", delete_after=10)
         else:
@@ -62,7 +62,7 @@ class ManagementCommands(commands.Cog):
         reaction, user = await self.client.wait_for("reaction_add", check=lambda r, u: r.emoji in ["✅", "❌"] and u.id == context.message.author.id and r.message.id == bots_message.id)
         if reaction.emoji == "✅":
             account_details = get_account_details(context.author.id)
-            result = Lists.delete(account_details[2], account_details[0])
+            result = lists.delete(account_details[2], account_details[0])
             update_list_id(context.author.id, None)
         await bots_message.delete()
 

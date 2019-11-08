@@ -6,10 +6,12 @@ from itertools import cycle
 import os
 import discord
 from discord.ext import commands
-from utils.api_handler import purge_cache, TV
 from utils.file_handler import download, make_genre_ids_file
 from utils.sql import get_subs
 from datetime import datetime, timedelta
+from fulltmdb import Setup, tv
+
+Setup.set_cache(3600)
 
 def get_prefix(client, message):#
     prefixes = ['?']#allowed prefixes
@@ -29,7 +31,7 @@ async def change_status():#changes the status of the bot every 10 seconds from t
 async def auto_purge():#Clears the requests cache of expired responses every hour
     await client.wait_until_ready()
     while not client.is_closed():
-        purge_cache()
+        Setup.purge_cache()
         await asyncio.sleep(3600)
 
 async def notification():#sends a notification to the people that have "subed" to a tv show that has an episode airing today
@@ -39,11 +41,11 @@ async def notification():#sends a notification to the people that have "subed" t
         await asyncio.sleep((to-now()).seconds)
         page = 1
         while True:
-            results, extra = TV.airing_today(page)
-            for res in results:
-                results = get_subs(res.id)
-                if results != []:
-                    for user_id in results[0]:
+            result = tv.airing_today(page=page)
+            for res in result['results']:
+                subs = get_subs(res.id)
+                if subs != []:
+                    for user_id in subs[0]:
                         member = client.get_user(user_id)
                         await member.send(res.name)
             if page == int(extra.total_pages):
@@ -52,7 +54,7 @@ async def notification():#sends a notification to the people that have "subed" t
         await client.close()
 
 #list of all cogs that should be loaded on startup
-INITIAL_EXTENSIONS = ['cogs.owner', 'cogs.general', 'cogs.management', 'cogs.error_handling']#
+INITIAL_EXTENSIONS = ['cogs.owner', 'cogs.general', 'cogs.management']#, 'cogs.error_handling'
 
 #creates instance of the bot
 client = commands.Bot(command_prefix=get_prefix, description='My Bot')

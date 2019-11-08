@@ -1,6 +1,6 @@
 import discord
 from discord.ext import commands
-from utils.api_handler import purge_cache
+from fulltmdb import Setup
 
 #cog for owner only commands
 class OwnerCog(commands.Cog):
@@ -50,7 +50,7 @@ class OwnerCog(commands.Cog):
     @commands.command(aliases=["Clear"], hidden=True)
     @commands.check(is_allowed)
     async def clear(self, context):
-        purge_cache()
+        Setup.purge_cache()
 
     #command for shutting down the bot.
     @commands.command(name='shutdown', aliases=["Shutdown"], hidden=True)
